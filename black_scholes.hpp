@@ -1,9 +1,9 @@
 #define inverse_sqrt_2pi 0.39894228040143270286
 #define gamma 0.2316519
 #define alpha1 0.319381530
-#define alpha2 - 0.356563782
+#define alpha2 -0.356563782
 #define alpha3 1.781477937
-#define alpha4 - 1.821255978
+#define alpha4 -1.821255978
 #define alpha5 1.330274429
 
 using namespace std;
