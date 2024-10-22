@@ -40,7 +40,7 @@ inline float calculate_cumulative_probabilities_Nd1_Nd2(float input) {
 }
 
 // if option = 0 then return european put option else if option = 1 return call option
-void Black_Scholes_CPU(int option, float spot_price[SIZE], float strike_price, float rate, float volatility, float time[SIZE], float optionPrice[SIZE]) {
+void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, float rate, float volatility, float time, float *optionPrice) {
 
   // C = S * N(d1) - X * e^(-rt) * N(d2)
   // S = spot price
@@ -52,24 +52,20 @@ void Black_Scholes_CPU(int option, float spot_price[SIZE], float strike_price, f
 
   float d1, d2;
 
-  // for all stocks
-  for (int i = 0; i < SIZE; i++) {
+  // Step 1: Calculate d1 and d2
+  calculate_prob_factors_d1_d2(spot_price, strike_price, rate, volatility, time, &d1, &d2);
 
-    // Step 1: Calculate d1 and d2
-    calculate_prob_factors_d1_d2(spot_price[i], strike_price, rate, volatility, time[i], & d1, & d2);
-
-    // Step 2: Calculate the price of the option
-    optionPrice[i] = 0.0;
-    float FutureValue = strike_price * exp((-rate) * time[i]);
-    if (option) {
-      float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(d1);
-      float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(d2);
-      // C = (spot price * N(d1)) - (strike_price * e^(-rt) * N(d2))
-      optionPrice[i] = spot_price[i] * Nd1 - FutureValue * Nd2;
-    } else {
-      float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(-d1);
-      float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(-d2);
-      optionPrice[i] = FutureValue * Nd2 - spot_price[i] * Nd1;
-    }
+  // Step 2: Calculate the price of the option
+  float FutureValue = strike_price * exp((-rate) * time);
+  if (optionType) {
+    float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(d1);
+    float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(d2);
+    // C = (spot price * N(d1)) - (strike_price * e^(-rt) * N(d2))
+    *optionPrice = spot_price * Nd1 - FutureValue * Nd2;
+  } else {
+    float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(-d1);
+    float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(-d2);
+    *optionPrice = FutureValue * Nd2 - spot_price * Nd1;
   }
+  
 }

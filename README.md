@@ -21,8 +21,10 @@ Arguments:
 
 ## Todo:
 - [ ] Check that fast CDF approximation is correct
-- [ ] Finish CPU implementation
-- [ ] Get a dataset
+- [x] Finish CPU implementation
+- [ ] d2 calculation can be done in parallel
+- [x] Get a dataset
 
 ### Usefull Links
 * [Black Scholes Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
+* [Tim Worrall Notes for Black Scholes](http://www.timworrall.com/fin-40008/bscholes.pdf)
