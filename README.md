@@ -12,18 +12,21 @@ g++ main.cpp -o black_scholes.o
 
 And to run:
 ```
-./black_scholes.o ./datasets/close.txt ./datasets/dates.txt
+./black_scholes.o ./datasets/option_price.txt ./datasets/strike.txt ./datasets/tte.txt ./datasets/type.txt
 ```
 
 Arguments:
 1. Close Prices Filepath
-2. Dates Filepath
+2. Strike Prices Filepath
+3. Time To Expiration (TTE) Filepath
+4. Option Type Filepath
 
 ## Todo:
-- [ ] Check that fast CDF approximation is correct
 - [x] Finish CPU implementation
-- [ ] d2 calculation can be done in parallel
 - [x] Get a dataset
+- [ ] Identify the bug with PUT options returning 0
+- [ ] Check that fast CDF approximation is correct
+- [ ] d2 calculation can be done in parallel
 
 ### Usefull Links
 * [Black Scholes Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
