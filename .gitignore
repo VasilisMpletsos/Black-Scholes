@@ -1,2 +1,6 @@
 # Ignore compiled files
 *.o
+
+
+# Ignore datasets
+datasets/
