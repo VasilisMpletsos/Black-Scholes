@@ -57,12 +57,23 @@ void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, flo
 
 
   float d1, d2;
+  chrono::high_resolution_clock::time_point t1, t2;
+  chrono::duration <double, std::milli> CPU_time;
 
+  t1 = chrono::high_resolution_clock::now();
   // Step 1: Calculate d1 and d2
   calculate_prob_factors_d1_d2(spot_price, strike_price, rate, volatility, time, &d1, &d2);
+  t2 = chrono::high_resolution_clock::now();
+  CPU_time = t2 - t1;
+  printf("calculate_prob_factors_d1_d2: %f ms\n", CPU_time.count());
 
+  t1 = chrono::high_resolution_clock::now();
   // Step 2: Calculate the price of the option
   float FutureValue = strike_price * exp((-rate) * time);
+  t2 = chrono::high_resolution_clock::now();
+  CPU_time = t2 - t1;
+  printf("FutureValue: %f ms\n", CPU_time.count());
+  t1 = chrono::high_resolution_clock::now();
   if (optionType) {
     float Nd1 = fast_cdf_approximation(d1);
     float Nd2 = fast_cdf_approximation(d2);
@@ -76,5 +87,8 @@ void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, flo
     
     *optionPrice = FutureValue * Nd2 - spot_price * Nd1;
   }
+  t2 = chrono::high_resolution_clock::now();
+  CPU_time = t2 - t1;
+  printf("optionPrice: %f ms\n\n", CPU_time.count());
   
 }
