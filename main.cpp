@@ -92,8 +92,9 @@ int main(int argc, char ** argv) {
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
     printf("CPU Time: %f ms\n", CPU_time.count());
 
-    // // Print the 10 first option prices
+    // // Print the calculated option prices
     // for (int i = 0; i < DATA_SIZE; i++) {
     //     printf("Option Price: %f\n Call Option Type %d\n\n", optionPrices[i], callTypes[i]);
     // }
+
 }

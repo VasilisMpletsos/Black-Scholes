@@ -21,6 +21,12 @@ inline void calculate_prob_factors_d1_d2(float spotprice, float strike, float ra
   *d2 = *d1 - denum;
 }
 
+// Classic CDF calculation
+float normal_cdf(float x) {
+    return 0.5 * (1 + std::erf(x / std::sqrt(2)));
+}
+
+// This is a quicker version of the CDF calculation
 inline float fast_cdf_approximation(float input) {
   // Approximation of the CDF based on Abramowitz and Stegun
   float kappa = 1.0 / (1.0 + gamma * input);
@@ -34,6 +40,7 @@ inline float calculate_cumulative_probabilities_Nd1_Nd2(float input) {
 
   if (input >= 0.0) {
     return (1.0 - normal_prime * fast_cdf_approximation(input));
+    // return (1.0 - normal_prime * fast_cdf_approximation(input));
   } else {
     return 1.0 - calculate_cumulative_probabilities_Nd1_Nd2(-input);
   }

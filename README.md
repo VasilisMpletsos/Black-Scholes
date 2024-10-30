@@ -36,7 +36,7 @@ Arguments:
 
 ## Comparisons
 
-Times are reported in ms
+Times are reported in **ms**.
 
 | Run         | Python      | C++         |
 |-------------|-------------|-------------|
@@ -52,4 +52,25 @@ Times are reported in ms
 | 10          | 86.902      | 0.131441    |
 | **Average** | **84.3647** | **0.135917**|
 
-Even the python is not the best implementation nor is the C++ and the speedup is **x620** times more fast!
+The **Python** implementation is is **x620 times more slow** than **C++**!
+
+****
+
+Now the following comparison is between **fast_cdf_approximation** and **normal_cdf** functions:
+| Run         | Fast Approximation| Normal CDF  |
+|-------------|-------------------|-------------|
+| 1           | 0.070818          | 0.215529    |
+| 2           | 0.086184          | 0.075847    |
+| 3           | 0.128787          | 0.184100    |
+| 4           | 0.127878          | 0.072495    |
+| 5           | 0.231174          | 0.187733    |
+| 6           | 0.070958          | 0.094425    |
+| 7           | 0.068235          | 0.132488    |
+| 8           | 0.136400          | 0.096380    |
+| 9           | 0.069562          | 0.101339    |
+| 10          | 0.070050          | 0.135142    |
+| **Average** | **0.1060046**     | **0.129548**|
+
+The fast approximation seems to be **x1.22 times faster**
+It would be even more helpfull due the the embedding nature of FPGA 
+****
