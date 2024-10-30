@@ -87,8 +87,8 @@ Executing Black-Scholes GPU kernel (512 iterations)...
 Options count             : 858     
 BlackScholesGPU() time    : 0.001937 msec
 ```
-GPU IS <u>**x54 times faster**</u> than the best implementation so far on CPU
-and **x33480** from python*
+GPU IS <u>**x54 times faster**</u> than the best implementation so far on CPU from C++
+and **x33480** from Python
 
 
 ****
