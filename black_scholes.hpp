@@ -27,22 +27,21 @@ float normal_cdf(float x) {
 }
 
 // This is a quicker version of the CDF calculation
-inline float fast_cdf_approximation(float input) {
+inline float polynomial_approximation(float input) {
   // Approximation of the CDF based on Abramowitz and Stegun
   float kappa = 1.0 / (1.0 + gamma * input);
   float polynomial_approximation = kappa * (alpha1 + kappa * (alpha2 + kappa * (alpha3 + kappa * (alpha4 + alpha5 * kappa))));
   return polynomial_approximation;
 }
 
-inline float calculate_cumulative_probabilities_Nd1_Nd2(float input) {
+inline float fast_cdf_approximation(float input) {
   float expVal = exp(-0.5f * input * input);
   float normal_prime = expVal * inverse_sqrt_2pi;
 
   if (input >= 0.0) {
-    return (1.0 - normal_prime * fast_cdf_approximation(input));
-    // return (1.0 - normal_prime * fast_cdf_approximation(input));
+    return (1.0 - normal_prime * polynomial_approximation(input));
   } else {
-    return 1.0 - calculate_cumulative_probabilities_Nd1_Nd2(-input);
+    return 1.0 - fast_cdf_approximation(-input);
   }
 }
 
@@ -65,15 +64,15 @@ void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, flo
   // Step 2: Calculate the price of the option
   float FutureValue = strike_price * exp((-rate) * time);
   if (optionType) {
-    float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(d1);
-    float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(d2);
+    float Nd1 = fast_cdf_approximation(d1);
+    float Nd2 = fast_cdf_approximation(d2);
     // C = (spot price * N(d1)) - (strike_price * e^(-rt) * N(d2))
     *optionPrice = spot_price * Nd1 - FutureValue * Nd2;
   } else {
     // This is the case for a put option
     // P = (strike_price * e^(-rt) * N(-d2)) − (spot price * N(-d1))
-    float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(-d1);
-    float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(-d2);
+    float Nd1 = fast_cdf_approximation(-d1);
+    float Nd2 = fast_cdf_approximation(-d2);
     
     *optionPrice = FutureValue * Nd2 - spot_price * Nd1;
   }
