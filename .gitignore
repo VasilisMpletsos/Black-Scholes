@@ -1,6 +1,11 @@
 # Ignore compiled files
 *.o
 
-
 # Ignore datasets
 datasets/
+
+# Ignore notebooks
+*.ipynb
+
+# Ignore python outputs
+__pycache__/

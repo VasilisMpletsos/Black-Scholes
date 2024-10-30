@@ -63,8 +63,11 @@ void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, flo
     // C = (spot price * N(d1)) - (strike_price * e^(-rt) * N(d2))
     *optionPrice = spot_price * Nd1 - FutureValue * Nd2;
   } else {
+    // This is the case for a put option
+    // P = (strike_price * e^(-rt) * N(-d2)) − (spot price * N(-d1))
     float Nd1 = calculate_cumulative_probabilities_Nd1_Nd2(-d1);
     float Nd2 = calculate_cumulative_probabilities_Nd1_Nd2(-d2);
+    
     *optionPrice = FutureValue * Nd2 - spot_price * Nd1;
   }
   

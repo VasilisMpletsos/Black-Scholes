@@ -39,12 +39,6 @@ int main(int argc, char ** argv) {
     std::string STRIKE_PRICE_FILE_PATH = argv[2];
     std::string TTE_FILE_PATH = argv[3];
     std::string OPTION_TYPE_FILE_PATH = argv[4];
-    
-    // Print input arguments
-    printf("CLOSE_FILE_PATH: %s\n", CLOSE_FILE_PATH.c_str());
-    printf("STRIKE_PRICE_FILE_PATH: %s\n", STRIKE_PRICE_FILE_PATH.c_str());
-    printf("TTE_FILE_PATH: %s\n", TTE_FILE_PATH.c_str());
-    printf("OPTION_TYPE_FILE_PATH: %s\n\n", OPTION_TYPE_FILE_PATH.c_str());
 
     // Open files streams
     std::ifstream closeFile (CLOSE_FILE_PATH);
@@ -98,8 +92,8 @@ int main(int argc, char ** argv) {
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
     printf("CPU Time: %f ms\n", CPU_time.count());
 
-    // Print the 10 first option prices
-    for (int i = 0; i < 10; i++) {
-        printf("Option Price: %f\n Call Option Type %d\n\n", optionPrices[i], callTypes[i]);
-    }
+    // // Print the 10 first option prices
+    // for (int i = 0; i < DATA_SIZE; i++) {
+    //     printf("Option Price: %f\n Call Option Type %d\n\n", optionPrices[i], callTypes[i]);
+    // }
 }
