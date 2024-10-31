@@ -9,7 +9,6 @@
 #define RISK_FREE_RATE  0.01575
 // logical values from 10% to 30% but depends on the stock
 #define VOLATILITY 0.25
-#define STRIKE_PRICE 2400
 
 // Import various libraries
 #include "string.h"
@@ -34,48 +33,39 @@
 
 // With Arguments
 int main(int argc, char ** argv) {
-    // Body
-    std::string CLOSE_FILE_PATH = argv[1];
-    std::string STRIKE_PRICE_FILE_PATH = argv[2];
-    std::string TTE_FILE_PATH = argv[3];
-    std::string OPTION_TYPE_FILE_PATH = argv[4];
-
-    // Open files streams
-    std::ifstream closeFile (CLOSE_FILE_PATH);
-    std::ifstream tteFile (TTE_FILE_PATH);
-    std::ifstream strikeFile (STRIKE_PRICE_FILE_PATH);
-    std::ifstream typeFile (OPTION_TYPE_FILE_PATH);
-
+    
     // Read close prices
     float closePrices[DATA_SIZE], strikePrices[DATA_SIZE], tte[DATA_SIZE];
     int callTypes[DATA_SIZE];
 
-    // Iterate over the close prices and store
+        printf("Reading data...\n");
+    // Reading data from files
+    std::cout << "Reading data...\n";
+    std::ifstream closeFile("./datasets/option_price.txt");
+    std::ifstream strikeFile("./datasets/strike.txt");
+    std::ifstream tteFile("./datasets/tte.txt");
+    std::ifstream typeFile("./datasets/type.txt");
+
+    // Check if files opened successfully
+    if (!closeFile || !strikeFile || !tteFile || !typeFile) {
+        throw std::runtime_error("Failed to open one or more input files.");
+    }
+
+    // Load data into host arrays
     for (int i = 0; i < DATA_SIZE; i++) {
         std::string line;
+
         std::getline(closeFile, line);
         closePrices[i] = std::stof(line);
-    }
 
-    // Iterate over the dates and store
-    for (int i = 0; i < DATA_SIZE; i++) {
-        std::string line;
-        std::getline(tteFile, line);
-        tte[i] = std::stof(line);
-    }
-
-    // Iterate over the strike prices and store
-    for (int i = 0; i < DATA_SIZE; i++) {
-        std::string line;
         std::getline(strikeFile, line);
         strikePrices[i] = std::stof(line);
-    }
 
-    // Iterate over the option types and store
-    for (int i = 0; i < DATA_SIZE; i++) {
-        std::string line;
+        std::getline(tteFile, line);
+        tte[i] = std::stof(line);
+
         std::getline(typeFile, line);
-        callTypes[i] = std::stof(line);
+        callTypes[i] = std::stoi(line);  // Assuming type is an integer
     }
 
     // =================== CPU Execution ===================
@@ -92,9 +82,9 @@ int main(int argc, char ** argv) {
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
     printf("CPU Time: %f ms\n", CPU_time.count());
 
-    // // Print the calculated option prices
-    // for (int i = 0; i < DATA_SIZE; i++) {
-    //     printf("Option Price: %f\n Call Option Type %d\n\n", optionPrices[i], callTypes[i]);
-    // }
+    // Print the calculated option prices
+    for (int i = 0; i < DATA_SIZE; i++) {
+        printf("Option Price: %f\n Call Option Type %d\n\n", optionPrices[i], callTypes[i]);
+    }
 
 }

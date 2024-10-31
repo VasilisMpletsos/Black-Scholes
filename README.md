@@ -31,6 +31,11 @@ Arguments:
 
 ****
 
+To see cuda specifications
+```
+nvcc gpu_info.cu -o gpu_info.o
+./gpu_info.o
+
 For cuda compile with nvcc and run
 ```
 nvcc -I./common/inc BlackScholes.cu BlackScholes_gold.cpp -o black_scholes_cuda.o
