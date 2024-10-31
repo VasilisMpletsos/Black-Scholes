@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < REPEAT_ITERATIONS_EXPERIMENT; i++)
     {
-        BlackScholesGPU<<<1, 1024>>>(
+        BlackScholesGPU<<<1, DATA_SIZE>>>(
             (int1 *)d_OptionTypes,
             (float1 *)d_StockPrice,
             (float1 *)d_OptionStrike,

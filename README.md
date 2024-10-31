@@ -9,7 +9,8 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 - [x] Check that fast CDF approximation is correct
 - [x] Python version in order to run on GPU
 - [x] Execute cuda version
-- [ ] Match cuda version to run with my dataset
+- [x] Match cuda version to run with my dataset
+- [ ] Check if recursive else is needed in `fast_cdf_approximation`
 - [ ] d2 calculation can be done in parallel
 - [ ] Profiling for the algorithm
 - [ ] Contact Papaefstathiou & Aggelos after profiling
@@ -91,10 +92,10 @@ Finally the results from GPU side with CUDA are:
 ```
 Executing Black-Scholes GPU kernel (512 iterations)...
 Options count             : 858     
-BlackScholesGPU() time    : 0.001937 msec
+BlackScholesGPU() time    : 0.002089 msec
 ```
-GPU IS <u>**x54 times faster**</u> than the best implementation so far on CPU from C++
-and **x33480** from Python
+GPU IS <u>**x50.74 times faster**</u> than the best implementation so far on CPU from C++
+and **x31461** from Python
 
 
 ****
