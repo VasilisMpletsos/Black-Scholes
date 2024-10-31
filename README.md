@@ -35,6 +35,7 @@ To see cuda specifications
 ```
 nvcc gpu_info.cu -o gpu_info.o
 ./gpu_info.o
+```
 
 For cuda compile with nvcc and run
 ```
@@ -101,3 +102,4 @@ and **x33480** from Python
 * [Black Scholes Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
 * [Tim Worrall Notes for Black Scholes](http://www.timworrall.com/fin-40008/bscholes.pdf)
 * [Black Scholes Cuda by Nvidia](https://github.com/tpn/cuda-samples/tree/master/v9.0/4_Finance/BlackScholes)
+* [Cuda Commands](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE)
