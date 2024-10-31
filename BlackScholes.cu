@@ -125,10 +125,7 @@ int main(int argc, char **argv)
     //Both call and put is calculated
     printf("Black Scholes GPU() average execution time: %f msec\n", gpuTime);
     printf("Effective memory bandwidth: %f GB/s\n", ((double)(5 * DATA_SIZE * sizeof(float)) * 1E-9) / (gpuTime * 1E-3));
-    printf("Gigaoptions per second: %f     \n\n", ((double)(2 * DATA_SIZE) * 1E-9) / (gpuTime * 1E-3));
-
-    printf("BlackScholes, Throughput = %.4f GOptions/s, Time = %.5f s, Size = %u options, NumDevsUsed = %u, Workgroup = %u\n",
-           (((double)(2.0 * DATA_SIZE) * 1.0E-9) / (gpuTime * 1.0E-3)), gpuTime*1e-3, (2 * DATA_SIZE), 1, 128);
+    printf("Gigaoptions per second: %f \n\n", ((double)(DATA_SIZE) * 1E-9) / (gpuTime * 1E-3));
 
     printf("\nReading back GPU results...\n");
     //Read back GPU results to compare them to CPU results

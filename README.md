@@ -90,9 +90,10 @@ It would be even more helpfull due the the embedding nature of FPGA
 
 Finally the results from GPU side with CUDA are:
 ```
-Executing Black-Scholes GPU kernel (512 iterations)...
-Options count             : 858     
-BlackScholesGPU() time    : 0.002089 msec
+Executing Black-Scholes GPU kernel 1000 iterations...
+Black Scholes GPU() average execution time: 0.002089 msec
+Effective memory bandwidth: 8.230216 GB/s
+Gigaoptions per second: 0.411511 
 ```
 GPU IS <u>**x50.74 times faster**</u> than the best implementation so far on CPU from C++
 and **x31461** from Python
