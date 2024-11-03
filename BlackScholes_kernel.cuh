@@ -1,4 +1,4 @@
-#define MAX_THREADS_PER_BLOCK 1024
+#define MAX_THREADS_PER_BLOCK DATA_SIZE
 #define MIN_BLOCKS_PER_MP     2
 #define GAMMA 0.2316419f
 
@@ -52,7 +52,7 @@ __device__ inline void BlackScholesBodyGPU(
     //Calculate Call and Put simultaneously
     expRT = __expf(- R * T);
 
-    if (TP == 0)
+    if (TP)
     {
         OptionResult = S * CNDD1 - X * expRT * CNDD2;
     }

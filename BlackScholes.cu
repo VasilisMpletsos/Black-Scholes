@@ -106,7 +106,8 @@ int main(int argc, char **argv)
 
     for (i = 0; i < REPEAT_ITERATIONS_EXPERIMENT; i++)
     {
-        BlackScholesGPU<<<1, DATA_SIZE>>>(
+        // because we have 858 options, we need to launch 13 blocks of 66 threads
+        BlackScholesGPU<<<1024, 66>>>(
             (int1 *)d_OptionTypes,
             (float1 *)d_StockPrice,
             (float1 *)d_OptionStrike,
@@ -118,8 +119,8 @@ int main(int argc, char **argv)
         getLastCudaError("BlackScholesGPU() execution failed\n");
     }
 
-    checkCudaErrors(cudaDeviceSynchronize());
     sdkStopTimer(&hTimer);
+    checkCudaErrors(cudaDeviceSynchronize());
     gpuTime = sdkGetTimerValue(&hTimer) / REPEAT_ITERATIONS_EXPERIMENT;
 
     //Both call and put is calculated
