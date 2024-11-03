@@ -21,14 +21,8 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 For CPU comping with gnu compiler g++ and run
 ```
 g++ main.cpp -o black_scholes.o
-./black_scholes.o
+./black_scholes_cpu.o
 ```
-
-Arguments:
-1. Close Prices Filepath
-2. Strike Prices Filepath
-3. Time To Expiration (TTE) Filepath
-4. Option Type Filepath
 
 ****
 
@@ -43,9 +37,7 @@ For cuda compile with nvcc and run
 nvcc -I./common/inc BlackScholes.cu BlackScholes_gold.cpp -o black_scholes_cuda.o
 ./black_scholes_cuda.o
 ```
-
-
-
+To create them all run "make" to start makefile.
 
 ## Comparisons
 

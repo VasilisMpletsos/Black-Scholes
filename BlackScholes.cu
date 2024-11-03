@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < REPEAT_ITERATIONS_EXPERIMENT; i++)
     {
-        // because we have 858 options, we need to launch 13 blocks of 66 threads
+        // because we have 858 options, we can launch 13 blocks of 66 threads
         BlackScholesGPU<<<13, 66>>>(
             (int1 *)d_OptionTypes,
             (float1 *)d_StockPrice,

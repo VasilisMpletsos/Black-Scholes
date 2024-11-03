@@ -82,9 +82,9 @@ int main(int argc, char ** argv) {
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
     printf("CPU Time: %f ms\n", CPU_time.count());
 
-    // Iterate through results and print
-    for (int i = 0; i < DATA_SIZE; i++) {
-        printf("Option %d: %.5f\n", i+1, optionPrices[i]);
-    }
+    // // Iterate through results and print
+    // for (int i = 0; i < DATA_SIZE; i++) {
+    //     printf("Option %d: %.5f\n", i+1, optionPrices[i]);
+    // }
 
 }
