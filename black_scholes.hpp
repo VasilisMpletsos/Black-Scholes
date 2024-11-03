@@ -38,12 +38,12 @@ inline float polynomial_approximation(float input) {
 inline float fast_cdf_approximation(float input) {
   float expVal = exp(-0.5f * input * input);
   float normal_prime = expVal * inverse_sqrt_2pi;
+  float cdn = normal_prime * polynomial_approximation(input);
 
   if (input >= 0.0) {
-    return (1.0 - normal_prime * polynomial_approximation(input));
-  } else {
-    return 1.0 - fast_cdf_approximation(-input);
-  }
+    return (1.0 - cdn);
+  } 
+  return cdn;
 }
 
 // if option = 0 then return european put option else if option = 1 return call option
