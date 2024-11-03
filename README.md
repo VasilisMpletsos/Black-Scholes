@@ -10,8 +10,7 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 - [x] Python version in order to run on GPU
 - [x] Execute cuda version
 - [x] Match cuda version to run with my dataset
-- [ ] Check if recursive else is needed in `fast_cdf_approximation`
-- [ ] d2 calculation can be done in parallel
+- [ ] Add all FPGA code & execute
 - [ ] Profiling for the algorithm
 - [ ] Contact Papaefstathiou & Aggelos after profiling
 
