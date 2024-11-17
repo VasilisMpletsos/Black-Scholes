@@ -149,8 +149,8 @@ void write(hls::stream<FPGA_FIXED_POINT> &optionStream, FPGA_FIXED_POINT optionP
 }
 
 extern "C" {
-    void kernelBlackScholes(OPTION_TYPE_BOOL option[SIZE], FPGA_FIXED_POINT spotprice[SIZE], FPGA_FIXED_POINT strikeprice[SIZE],  FPGA_FIXED_POINT time[SIZE], FPGA_FIXED_POINT optionPrice[SIZE]) {
-        #pragma HLS INTERFACE m_axi port=option bundle=gmem0
+    void kernelBlackScholes(OPTION_TYPE_BOOL optionType[SIZE], FPGA_FIXED_POINT spotprice[SIZE], FPGA_FIXED_POINT strikeprice[SIZE],  FPGA_FIXED_POINT time[SIZE], FPGA_FIXED_POINT optionPrice[SIZE]) {
+        #pragma HLS INTERFACE m_axi port=optionType bundle=gmem0
         #pragma HLS INTERFACE m_axi port=spotprice bundle=gmem1
         #pragma HLS INTERFACE m_axi port=strikeprice bundle=gmem2
         #pragma HLS INTERFACE m_axi port=time bundle=gmem3

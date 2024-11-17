@@ -10,6 +10,7 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 - [x] Python version in order to run on GPU
 - [x] Execute cuda version
 - [x] Match cuda version to run with my dataset
+- [ ] Intergrate Xilinx Makefile to mine
 - [ ] Add all FPGA code & execute
 - [ ] Profiling for the algorithm
 - [ ] Contact Papaefstathiou & Aggelos after profiling
@@ -24,7 +25,6 @@ g++ main.cpp -o black_scholes.o
 ```
 
 ****
-
 To see cuda specifications
 ```
 nvcc gpu_info.cu -o gpu_info.o
@@ -89,6 +89,32 @@ Gigaoptions per second: 0.511018
 ```
 GPU IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
 and **x47833** from Python
+
+****
+### In order to run VITIS
+
+Add the required sources
+```
+source /opt/xilinx/xrt/setup.sh
+source /tools/Xilinx/Vitis/2022.1/settings64.sh
+export CPATH="/usr/include/x86_64-linux-gnu/"
+```
+
+Makefile
+```
+make all TARGET=sw_emu DEVICE=xilinx_u200_gen3x16_xdma_2_202110_1
+```
+
+Copy build
+```
+cp build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/mmul.xclbin ./
+export XCL_EMULATION_MODE=sw_emu
+```
+
+Start Vitis:
+```
+vitis_hls
+```
 
 
 ****
