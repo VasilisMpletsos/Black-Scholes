@@ -89,7 +89,6 @@ Gigaoptions per second: 0.511018
 ```
 GPU IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
 and **x47833** from Python
-
 ****
 ### In order to run VITIS
 
@@ -99,26 +98,34 @@ source /opt/xilinx/xrt/setup.sh
 source /tools/Xilinx/Vitis/2022.1/settings64.sh
 export CPATH="/usr/include/x86_64-linux-gnu/"
 ```
+And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx
+```
+export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
+```
 
 Makefile
 ```
-make all TARGET=sw_emu DEVICE=xilinx_u200_gen3x16_xdma_2_202110_1
+DEVICE=xilinx_u200_gen3x16_xdma_2_202110_1
+make all TARGET=sw_emu
 ```
-
 Copy build
 ```
 cp build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/mmul.xclbin ./
 export XCL_EMULATION_MODE=sw_emu
 ```
-
 Start Vitis:
 ```
 vitis_hls
 ```
-****
+
 In order to run the Simulation in Vitis:
 * 10ns for 100MHz sim although u200 can achieve max 300MHz
 * Select Alveo u200 from boards
+  
+The estimated simulation from Vitis regarding execution time is:
+**7.3ns** so **7 times slower** than the GPU.
+
+![App Screenshot](./assets/vitis.png)
 
 ****
 ### Usefull Links
