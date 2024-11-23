@@ -115,7 +115,10 @@ Start Vitis:
 ```
 vitis_hls
 ```
-
+****
+In order to run the Simulation in Vitis:
+* 10ns for 100MHz sim although u200 can achieve max 300MHz
+* Select Alveo u200 from boards
 
 ****
 ### Usefull Links
@@ -123,3 +126,4 @@ vitis_hls
 * [Tim Worrall Notes for Black Scholes](http://www.timworrall.com/fin-40008/bscholes.pdf)
 * [Black Scholes Cuda by Nvidia](https://github.com/tpn/cuda-samples/tree/master/v9.0/4_Finance/BlackScholes)
 * [Cuda Commands](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE)
+* [FPGA Platform Documentation](https://docs.amd.com/r/en-US/ug1120-alveo-platforms/U200-Gen3x16-XDMA-base_2-Platform)
