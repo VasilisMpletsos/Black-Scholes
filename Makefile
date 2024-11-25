@@ -99,7 +99,8 @@ endif
 CXXFLAGS += -I./common_fpga/includes/xcl2
 # Hardcoded line to find app_fixed.h although i run the needed source command
 CXXFLAGS += -I/tools/Xilinx/Vitis_HLS/2022.1/include
-HOST_SRCS += ./common_fpga/includes/xcl2/xcl2.cpp ./main.cpp
+# TODO: Move the logic all to the main.cpp with gpu and cpu
+# HOST_SRCS += ./common_fpga/includes/xcl2/xcl2.cpp ./host.cpp
 # Host compiler global settings
 CXXFLAGS += -fmessage-length=0
 LDFLAGS += -lrt -lstdc++
@@ -115,8 +116,6 @@ VPP_FLAGS += -t $(TARGET) --platform $(DEVICE) --connectivity.nk $(KERNEL_NAME):
 ifneq ($(TARGET), hw)
 	VPP_FLAGS += -g
 endif
-
-
 
 EXECUTABLE = ./$(KERNEL_NAME)
 EMCONFIG_DIR = $(TEMP_DIR)

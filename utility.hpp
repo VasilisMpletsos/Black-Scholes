@@ -55,7 +55,7 @@ std::vector < cl::Device > get_xilinx_devices() {
   return devices;
 }
 
-char * read_binary_file(const std::string & xclbin_file_name, unsigned & nb) {
+char *read_binary_file(const std::string & xclbin_file_name, unsigned & nb) {
   if (access(xclbin_file_name.c_str(), R_OK) != 0) {
     printf("ERROR: %s xclbin not available please build\n", xclbin_file_name.c_str());
     exit(EXIT_FAILURE);

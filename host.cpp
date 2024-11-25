@@ -1,9 +1,9 @@
 #define SIZE 5000
 
 #include "utility.hpp"
-#include "BS_cpu.hpp"
 
-typedef ap_fixed < 23, 13, AP_RND_CONV > DTYPE;
+typedef ap_fixed <23,13,AP_RND_CONV > DTYPE;
+typedef ap_uint<1> OPTION_TYPE_BOOL;
 // typedef float DTYPE;
 
 // number of runs
@@ -16,23 +16,27 @@ typedef ap_fixed < 23, 13, AP_RND_CONV > DTYPE;
 int main(int argc, char ** argv) {
 
   // ------------------------------------------------------------------------------------
-  // Step 1: Initialize the OpenCL environment
+  // Step 1: Read Data
   // -----------------------------------------------------------------------------------
-
-  if (argc != 4) {
-    std::cout << "Usage: " << argv[0] << " <XCLBIN File> <CLOSE_FILE_PATH> <DATES_FILE_PATH> " << std::endl;
-    std::cout << argv[0] << ", " << argv[1] << ", " << argv[2] << ", " << argv[3] << std::endl;
-    return EXIT_FAILURE;
-  }
+  std::cout << "Reading data...\n";
+  std::ifstream closeFile("./datasets/option_price.txt");
+  std::ifstream strikeFile("./datasets/strike.txt");
+  std::ifstream tteFile("./datasets/tte.txt");
+  std::ifstream typeFile("./datasets/type.txt");
+  std::string binaryFile("./kernelBlackScholes.xclbin");
 
   std::string binaryFile = argv[1];
   std::string CLOSE_FILE_PATH = argv[2];
   std::string DATES_FILE_PATH = argv[3];
+
+  // ------------------------------------------------------------------------------------
+  // Step 2: Initialize the OpenCL environment
+  // -----------------------------------------------------------------------------------
   cl_int err;
   cl::CommandQueue q;
   cl::Context context;
   std::string CU_id;
-  std::vector < cl::Kernel > krnls(CU);
+  std::vector <cl::Kernel> krnls(CU);
   auto devices = xcl::get_xil_devices();
   auto fileBuf = xcl::read_binary_file(binaryFile);
   cl::Program::Binaries bins {
@@ -42,7 +46,7 @@ int main(int argc, char ** argv) {
   };
 
   bool valid_device = false;
-  std::string krnl_name = "krnl_BS";
+  std::string krnl_name = "kernelBlackScholes";
 
   for (unsigned int i = 0; i < devices.size(); i++) {
     auto device = devices[i];
@@ -50,7 +54,7 @@ int main(int argc, char ** argv) {
     OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, & err));
     OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, & err));
 
-    std::cout << "Trying to program device[" << i << "]: " << device.getInfo < CL_DEVICE_NAME > () << std::endl;
+    std::cout << "Trying to program device[" << i << "]: " << device.getInfo <CL_DEVICE_NAME>() << std::endl;
     cl::Program program(context, {
       device
     }, bins, nullptr, & err);
@@ -60,7 +64,7 @@ int main(int argc, char ** argv) {
       std::cout << "Device[" << i << "]: program successful!\n";
       for (int i = 0; i < CU; i++) {
         CU_id = std::to_string(i + 1);
-        std::string KERNEL_NAME_FULL = krnl_name + ":{" + "krnl_BS" + "_" + CU_id + "}";
+        std::string KERNEL_NAME_FULL = krnl_name + ":{" + "kernelBlackScholes" + "_" + CU_id + "}";
         OCL_CHECK(err, krnls[i] = cl::Kernel(program, KERNEL_NAME_FULL.c_str(), & err));
       }
       valid_device = true;
@@ -72,9 +76,13 @@ int main(int argc, char ** argv) {
     exit(EXIT_FAILURE);
   }
 
-  std::vector < cl::Buffer > time_buf(CU);
-  std::vector < cl::Buffer > spotprice_buf(CU);
-  std::vector < cl::Buffer > out_buf(CU);
+  // ------------------------------------------------------------------------------------
+  // Step 3: Initialize Buffers and add it to
+  // -----------------------------------------------------------------------------------
+
+  std::vector <cl::Buffer> time_buf(CU);
+  std::vector <cl::Buffer> spotprice_buf(CU);
+  std::vector <cl::Buffer> out_buf(CU);
 
   // Create the buffers and allocate memory
 
@@ -102,10 +110,10 @@ int main(int argc, char ** argv) {
     OCL_CHECK(err, err = krnls[i].setArg(narg++, out_buf[i]));
   }
   OCL_CHECK(err, err = q.finish());
-  // ------------------------------------------------------------------------------------
-  // Step 2: Create buffers and initialize test values
-  // -------------------------------------------------------------------------------
 
+  // ------------------------------------------------------------------------------------
+  // Step 3: Create buffers and initialize test values
+  // -------------------------------------------------------------------------------
   std::vector < DTYPE * > result(CU);
   std::vector < DTYPE * > spotprice(CU);
   std::vector < DTYPE * > time(CU);
@@ -121,7 +129,7 @@ int main(int argc, char ** argv) {
   DTYPE volatility = (DTYPE) 0.3147330660128807; // sigma
 
   // read returns and close prices from INB files
-  float * close, * years_until_expiry;
+  float *close, *years_until_expiry;
   close = (float * ) malloc(SIZE * sizeof(float));
   years_until_expiry = (float * ) malloc(SIZE * sizeof(float));
 

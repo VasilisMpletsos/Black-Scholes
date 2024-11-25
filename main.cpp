@@ -32,19 +32,20 @@
 
 
 // With Arguments
-int main(int argc, char ** argv) {
+int main(int argc, char **argv) {
     
     // Read close prices
     float closePrices[DATA_SIZE], strikePrices[DATA_SIZE], tte[DATA_SIZE];
     int callTypes[DATA_SIZE];
 
-        printf("Reading data...\n");
+    printf("Reading data...\n");
     // Reading data from files
     std::cout << "Reading data...\n";
     std::ifstream closeFile("./datasets/option_price.txt");
     std::ifstream strikeFile("./datasets/strike.txt");
     std::ifstream tteFile("./datasets/tte.txt");
     std::ifstream typeFile("./datasets/type.txt");
+    std::ifstream binaryFile("./datasets/type.txt");
 
     // Check if files opened successfully
     if (!closeFile || !strikeFile || !tteFile || !typeFile) {
