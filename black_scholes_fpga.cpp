@@ -34,6 +34,16 @@ typedef ap_uint<1> OPTION_TYPE_BOOL;
 inline void calculate_prob_factors_d1_d2_fpga(FPGA_FIXED_POINT spotprice, FPGA_FIXED_POINT strike, FPGA_FIXED_POINT tte, FPGA_FIXED_POINT *d1, FPGA_FIXED_POINT *d2);
 inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input);
 
+
+// Returns approximate value of e^x using sum of first n terms of Taylor Series
+inline FPGA_FIXED_POINT exp_taylor_aprox(FPGA_FIXED_POINT x) {
+    FPGA_FIXED_POINT sum = 1; // Initialize sum of series to the first term (e^0 = 1)
+    for (int i = N - 1; i > 0; --i) {
+        sum = (FPGA_FIXED_POINT)1 + (x * sum) / (FPGA_FIXED_POINT)i;
+    }
+    return sum;
+}
+
 inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT spotprice,
     FPGA_FIXED_POINT strike,
@@ -63,7 +73,7 @@ inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
 inline FPGA_FIXED_POINT fast_cdf_approximation_fpga(FPGA_FIXED_POINT input) {
     FPGA_FIXED_POINT inputSquared = (FPGA_FIXED_POINT)(input * input);
     FPGA_FIXED_POINT val = (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)0.5 * -inputSquared);
-    FPGA_FIXED_POINT expVal = exponential(val);
+    FPGA_FIXED_POINT expVal = exp_taylor_aprox(val);
     FPGA_FIXED_POINT normal_prime = expVal * (FPGA_FIXED_POINT)inverse_sqrt_2pi;
     FPGA_FIXED_POINT polynomial_approximation = polynomial_approximation_fpga(input);
     FPGA_FIXED_POINT cdn = normal_prime * polynomial_approximation;
@@ -71,15 +81,6 @@ inline FPGA_FIXED_POINT fast_cdf_approximation_fpga(FPGA_FIXED_POINT input) {
         return ((FPGA_FIXED_POINT)1.0 - cdn);
     }
     return cdn;
-}
-
-// Returns approximate value of e^x using sum of first n terms of Taylor Series
-inline FPGA_FIXED_POINT exp_taylor_aprox(FPGA_FIXED_POINT x) {
-    FPGA_FIXED_POINT sum = 1; // Initialize sum of series to the first term (e^0 = 1)
-    for (int i = N - 1; i > 0; --i) {
-        sum = (FPGA_FIXED_POINT)1 + (x * sum) / (FPGA_FIXED_POINT)i;
-    }
-    return sum;
 }
 
 void read(
@@ -170,8 +171,8 @@ extern "C" {
         #pragma HLS STREAM variable=optionStream depth=2
 
         #pragma HLS DATAFLOW
-        read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,option,spotprice,strikeprice,time);
-        compute(optionStream,spotpriceStream,strikepriceStream,timeStream,optionStream);
+        read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionType,spotprice,strikeprice,time);
+        compute(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionStream);
         write(optionStream, optionPrice);
   }
 }
