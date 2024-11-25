@@ -11,7 +11,7 @@ VPP_LDFLAGS += --profile.data all:all:all
 endif
 
 DEBUG := no
-B_TEMP = `$(XF_PROJ_ROOT)/common/utility/parse_platform_list.py $(DEVICE)`
+B_TEMP = `./common_fpga/utility/parse_platform_list.py $(DEVICE)`
 PERL ?= 
 QEMU_IMODE := no
 LAUNCH_EMULATOR_CMD := 
@@ -23,7 +23,7 @@ endif
 ifeq ($(QEMU_IMODE), yes)
 	LAUNCH_EMULATOR_CMD = $(LAUNCH_EMULATOR)
 else
-	LAUNCH_EMULATOR_CMD = $(PERL) $(XF_PROJ_ROOT)/common/utility/run_emulation.pl "${LAUNCH_EMULATOR} | tee run_app.log" "${RUN_APP_SCRIPT} $(TARGET)" "${RESULT_STRING}" "7"
+	LAUNCH_EMULATOR_CMD = $(PERL) ./common_fpga/utility/run_emulation.pl "${LAUNCH_EMULATOR} | tee run_app.log" "${RUN_APP_SCRIPT} $(TARGET)" "${RESULT_STRING}" "7"
 endif
 
 #Generates debug summary report
@@ -130,4 +130,4 @@ ECHO:= @echo
 docs: README.rst
 
 README.rst: description.json
-	$(XF_PROJ_ROOT)/common/utility/readme_gen/readme_gen.py description.json
+	./common_fpga/utility/readme_gen/readme_gen.py description.json

@@ -9,3 +9,7 @@ datasets/
 
 # Ignore python outputs
 __pycache__/
+
+_x.sw_emu*
+.Xil
+*.log
