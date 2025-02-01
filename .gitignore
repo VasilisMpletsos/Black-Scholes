@@ -11,7 +11,10 @@ datasets/
 __pycache__/
 
 _x.sw_emu*
+_x*
 .Xil
 *.log
 host.cpp
 /BlackScholes
+build_dir*
+.vscode/

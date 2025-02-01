@@ -18,10 +18,10 @@
 #include <random>
 #include <cstring>
 #include <CL/cl2.hpp>
-#include "xcl2.hpp"
+// #include "xcl2.hpp"
 #include <ctime>
-#include "ap_fixed.h"
-// #include "/tools/Xilinx/Vitis_HLS/2022.1/include/ap_fixed.h"
+// #include "ap_fixed.h"
+#include "/tools/Xilinx/Vitis_HLS/2022.1/include/ap_fixed.h"
 
 std::vector < cl::Device > get_xilinx_devices();
 char * read_binary_file(const std::string & xclbin_file_name, unsigned & nb);

@@ -24,6 +24,11 @@ g++ main.cpp -o black_scholes.o
 ./black_scholes_cpu.o
 ```
 
+```
+g++ host.cpp -o host.o
+./black_scholes_cpu.o
+```
+
 ****
 To see cuda specifications
 ```
@@ -98,6 +103,7 @@ source /opt/xilinx/xrt/setup.sh
 source /tools/Xilinx/Vitis/2022.1/settings64.sh
 export CPATH="/usr/include/x86_64-linux-gnu/"
 ```
+
 And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx
 ```
 export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
@@ -105,9 +111,14 @@ export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
 
 Makefile
 ```
-DEVICE=xilinx_u200_gen3x16_xdma_2_202110_1
-make all TARGET=sw_emu
+make -f Makefile_FPGA all TARGET=sw_emu
 ```
+
+The actual command for building host.cpp is probably:
+```
+g++ -o ./kernelBlackScholes ./common_fpga/includes/xcl2/xcl2.cpp ./host.cpp -I ./common_fpga/includes/xcl2 -I /tools/Xilinx/Vitis_HLS/2022.1/include -Wall -O0 -g -std=c++11 -lrt -lstdc++
+```
+
 Copy build
 ```
 cp build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/mmul.xclbin ./
