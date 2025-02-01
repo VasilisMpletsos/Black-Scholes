@@ -1,9 +1,9 @@
 #define SIZE 858
 
-// #include "utility.hpp"
+#include "utility.hpp"
 
-// typedef ap_fixed <23,13,AP_RND_CONV > DTYPE;
-// typedef ap_uint<1> OPTION_TYPE_BOOL;
+typedef ap_fixed <23,13,AP_RND_CONV > DTYPE;
+typedef ap_uint<1> OPTION_TYPE_BOOL;
 // typedef float DTYPE;
 
 // number of runs
@@ -81,133 +81,135 @@ int main(int argc, char ** argv) {
   // Step 2: Initialize the OpenCL environment
   // -----------------------------------------------------------------------------------
 
-  // cl_int err;
-  // cl::CommandQueue q;
-  // cl::Context context;
-  // std::string CU_id;
-  // std::vector <cl::Kernel> krnls(CU);
-  // auto devices = xcl::get_xil_devices();
-  // auto fileBuf = xcl::read_binary_file(binaryFile);
-  // cl::Program::Binaries bins {
-  //   {
-  //     fileBuf.data(), fileBuf.size()
-  //   }
-  // };
+  cl_int err;
+  cl::CommandQueue q;
+  cl::Context context;
+  std::string CU_id;
+  std::vector <cl::Kernel> krnls(CU);
+  auto devices = xcl::get_xil_devices();
+  auto fileBuf = xcl::read_binary_file(binaryFile);
+  cl::Program::Binaries bins {
+    {
+      fileBuf.data(), fileBuf.size()
+    }
+  };
 
-  // bool valid_device = false;
-  // std::string krnl_name = "kernelBlackScholes";
+  bool valid_device = false;
+  std::string krnl_name = "kernelBlackScholes";
 
-  // for (unsigned int i = 0; i < devices.size(); i++) {
-  //   auto device = devices[i];
-  //   // Creating Context and Command Queue for selected Device
-  //   OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, & err));
-  //   OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, & err));
+  for (unsigned int i = 0; i < devices.size(); i++) {
+    auto device = devices[i];
+    // Creating Context and Command Queue for selected Device
+    OCL_CHECK(err, context = cl::Context(device, nullptr, nullptr, nullptr, & err));
+    OCL_CHECK(err, q = cl::CommandQueue(context, device, CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, & err));
 
-  //   std::cout << "Trying to program device[" << i << "]: " << device.getInfo <CL_DEVICE_NAME>() << std::endl;
-  //   cl::Program program(context, {
-  //     device
-  //   }, bins, nullptr, & err);
-  //   if (err != CL_SUCCESS) {
-  //     std::cout << "Failed to program device[" << i << "] with xclbin file!\n";
-  //   } else {
-  //     std::cout << "Device[" << i << "]: program successful!\n";
-  //     for (int i = 0; i < CU; i++) {
-  //       CU_id = std::to_string(i + 1);
-  //       std::string KERNEL_NAME_FULL = krnl_name + ":{" + "kernelBlackScholes" + "_" + CU_id + "}";
-  //       OCL_CHECK(err, krnls[i] = cl::Kernel(program, KERNEL_NAME_FULL.c_str(), & err));
-  //     }
-  //     valid_device = true;
-  //     break; // We break because we found a valid device
-  //   }
-  // }
-  // if (!valid_device) {
-  //   std::cout << "Failed to program any device found, exit!\n";
-  //   exit(EXIT_FAILURE);
-  // }
+    std::cout << "Trying to program device[" << i << "]: " << device.getInfo <CL_DEVICE_NAME>() << std::endl;
+    cl::Program program(context, {
+      device
+    }, bins, nullptr, & err);
+    if (err != CL_SUCCESS) {
+      std::cout << "Failed to program device[" << i << "] with xclbin file!\n";
+    } else {
+      std::cout << "Device[" << i << "]: program successful!\n";
+      for (int i = 0; i < CU; i++) {
+        CU_id = std::to_string(i + 1);
+        std::string KERNEL_NAME_FULL = krnl_name + ":{" + "kernelBlackScholes" + "_" + CU_id + "}";
+        OCL_CHECK(err, krnls[i] = cl::Kernel(program, KERNEL_NAME_FULL.c_str(), & err));
+      }
+      valid_device = true;
+      break; // We break because we found a valid device
+    }
+  }
+  if (!valid_device) {
+    std::cout << "Failed to program any device found, exit!\n";
+    exit(EXIT_FAILURE);
+  }
 
-  // // ------------------------------------------------------------------------------------
-  // // Step 3: Initialize Buffers and add it to FPGA
-  // // -----------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------
+  // Step 3: Initialize Buffers and add it to FPGA
+  // -----------------------------------------------------------------------------------
 
-  // std::vector <cl::Buffer> tte_buf(SIZE);
-  // std::vector <cl::Buffer> close_buf(SIZE);
-  // std::vector <cl::Buffer> strike_buf(SIZE);
-  // std::vector <cl::Buffer> call_buf(SIZE);
-  // std::vector <cl::Buffer> out_buf(SIZE);
+  std::vector <cl::Buffer> call_buf(SIZE);
+  std::vector <cl::Buffer> close_buf(SIZE);
+  std::vector <cl::Buffer> strike_buf(SIZE);
+  std::vector <cl::Buffer> tte_buf(SIZE);
+  std::vector <cl::Buffer> out_buf(SIZE);
 
-  // // Create the buffers and allocate memory
+  // Create the buffers and allocate memory
+  for (int i = 0; i < SIZE; i++) {
+    OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
+    OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
+    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
+    OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
+    OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
+  }
 
-  // for (int i = 0; i < SIZE; i++) {
-  //   OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
-  //   OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
-  //   OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-  //   OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-  //   OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
-  // }
+  for (int i = 0; i < SIZE; i++) {
+    int narg = 0;
+    OCL_CHECK(err, err = krnls[i].setArg(narg++, call_buf[i]));
+    OCL_CHECK(err, err = krnls[i].setArg(narg++, close_buf[i]));
+    OCL_CHECK(err, err = krnls[i].setArg(narg++, strike_buf[i]));
+    OCL_CHECK(err, err = krnls[i].setArg(narg++,tte_buf[i]));
+    OCL_CHECK(err, err = krnls[i].setArg(narg++, out_buf[i]));
+  }
 
-  // for (int i = 0; i < SIZE; i++) {
-  //   int narg = 0;
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++, 0));
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++, close_buf[i]));
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++,tte_buf[i]));
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++, strike_buf[i]));
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++, call_buf[i]));
-  //   OCL_CHECK(err, err = krnls[i].setArg(narg++, out_buf[i]));
-  // }
+  OCL_CHECK(err, err = q.finish());
 
-  // OCL_CHECK(err, err = q.finish());
+  // ------------------------------------------------------------------------------------
+  // Step 3: Create buffers and initialize test values
+  // ------------------------------------------------------------------------------------
 
-  // // ------------------------------------------------------------------------------------
-  // // Step 3: Create buffers and initialize test values
-  // // -------------------------------------------------------------------------------
-  // std::vector < DTYPE * > result(SIZE);
-  // std::vector < DTYPE * > closeprice(SIZE);
-  // std::vector < DTYPE * > tte(SIZE);
-  // std::vector < DTYPE * > strikeprice(SIZE);
-  // std::vector < OPTION_TYPE_BOOL * > calloption(SIZE);
+  std::vector < OPTION_TYPE_BOOL * > calloption(SIZE);
+  std::vector < DTYPE * > closeprice(SIZE);
+  std::vector < DTYPE * > strikeprice(SIZE);
+  std::vector < DTYPE * > tte(SIZE);
+  std::vector < DTYPE * > result(SIZE);
 
-  // for (int i = 0; i < SIZE; i++) {
-  //   result[i] = (DTYPE * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(DTYPE));
-  //   closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-  //   tte[i] = (DTYPE * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-  //   strikeprice[i] = (DTYPE * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-  //   calloption[i] = (DTYPE * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-  // }
+  for (int i = 0; i < SIZE; i++) {
+    calloption[i] = (DTYPE * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
+    closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
+    strikeprice[i] = (DTYPE * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
+    tte[i] = (DTYPE * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
+    result[i] = (DTYPE * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(DTYPE));
+  }
 
 
-  // DTYPE rate = (DTYPE) 0.01575; // r
-  // DTYPE volatility = (DTYPE) 0.25; // sigma
+  DTYPE FPGA_RISK_FREE_RATE = (DTYPE) RISK_FREE_RATE; // r
+  DTYPE FPGA_VOLATILITY = (DTYPE) VOLATILITY; // sigma
 
   //------------- Execution------------
 
-  // TODO: Write the code to execute the kernel on FPGA
-  // for (int i = 0; i < CU; i++)
-  //   OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
-  //     close_buf[i],
-  //     tte_buf[i],
-  //     strike_buf[i],
-  //     call_buf[i]
-  //   }, 0));
-  // OCL_CHECK(err, err = q.finish());
+  for (int i = 0; i < SIZE; i++)
+    OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
+      call_buf[i]
+      close_buf[i],
+      tte_buf[i],
+      strike_buf[i],
+    }, 0));
+  OCL_CHECK(err, err = q.finish());
 
-  // chrono::high_resolution_clock::time_point t1, t2;
-  // t1 = chrono::high_resolution_clock::now();
-  // for (int i = 0; i < RUNS; i++) {
-  //   for (int j = 0; j < CU; j++) {
-  //     OCL_CHECK(err, err = q.enqueueTask(krnls[j]));
-  //   }
-  // }
-  // OCL_CHECK(err, err = q.finish());
-  // t2 = chrono::high_resolution_clock::now();
+  // --------------- FPGA Execution ---------------
 
-  // for (int i = 0; i < CU; i++) {
-  //   OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
-  //     strike_buf[i]
-  //   }, CL_MIGRATE_MEM_OBJECT_HOST));
-  // }
-  // OCL_CHECK(err, err = q.finish());
+  chrono::high_resolution_clock::time_point t1, t2;
+  t1 = chrono::high_resolution_clock::now();
+  for (int i = 0; i < RUNS; i++) {
+    for (int j = 0; j < SIZE; j++) {
+      OCL_CHECK(err, err = q.enqueueTask(krnls[j]));
+    }
+  }
+  OCL_CHECK(err, err = q.finish());
+  t2 = chrono::high_resolution_clock::now();
 
-  // chrono::duration < double > FPGA_time = t2 - t1;
+  for (int i = 0; i < SIZE; i++) {
+    OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
+      out_buf[i]
+    }, CL_MIGRATE_MEM_OBJECT_HOST));
+  }
+  OCL_CHECK(err, err = q.finish());
+
+  chrono::duration < double > FPGA_time = t2 - t1;
+
+  // --------------- CPU Execution ---------------
 
   float cpu_option_prices[SIZE];
   chrono::high_resolution_clock::time_point t1, t2;
@@ -222,50 +224,56 @@ int main(int argc, char ** argv) {
   chrono::duration <double, std::milli> CPU_time = t2 - t1;
   printf("CPU Time: %f ms\n", CPU_time.count());
 
+  // --------------- Compare Results ---------------
 
-  // // TODO: Compare the results of the FPGA to the CPU
-  // printf("--- Compare result CPU Vs FPGA --- \n");
-  // int counter = 0;
-  // float sum = 0.0;
-  // printf("Calculating Diffs \n");
-  // for (int i = 0; i < SIZE; i++) {
-  //   float dif = abs(cpu_option_prices[i] - (float) result[i]) / (cpu_option_prices[i]) * 100;
-  //   sum += dif;
-  //   if (dif <= QoS)
-  //     counter++;
-  //   else {
-  //     // printf("error at option %d \n", i);
-  //     // cout << "CPU result = " << cpu_option_prices[i] << endl;
-  //     // cout << "FPGA result = " << (float)result[i] << endl;
-  //   }
-  // }
+  printf("--- Compare result CPU Vs FPGA --- \n");
+  int counter = 0;
+  float sum = 0.0;
+  printf("Calculating Diffs \n");
+  for (int i = 0; i < SIZE; i++) {
+    float dif = abs(cpu_option_prices[i] - (float) result[i]) / (cpu_option_prices[i]) * 100;
+    sum += dif;
+    // If the difference is less that 0.5% we consider it correct result
+    if (dif <= QoS)
+      counter++;
+    else {
+      printf("error at option %d \n", i);
+      cout << "CPU result = " << cpu_option_prices[i] << endl;
+      cout << "FPGA result = " << (float)result[i] << endl;
+    }
+  }
 
-  // cout << "--- FINAL OPTIONS --- " << endl;
-  // cout << "correct = " << counter << " size = " << SIZE << endl;
-  // float score = (float) counter / SIZE;
-  // cout << "Score = " << score * 100 << " % " << endl;
-  // printf("Mean dif = %f % \n", sum / SIZE)
-  // cout << "----------" << endl;
+  cout << "--- FINAL OPTIONS --- " << endl;
+  cout << "correct = " << counter << " size = " << SIZE << endl;
+  float score = (float) counter / SIZE;
+  cout << "Score = " << score * 100 << " % " << endl;
+  printf("Mean dif = %f % \n", sum / SIZE)
+  cout << "--------------------" << endl;
 
 
   double average_cpu_time = CPU_time.count()/RUNS;
-  // double average_fpga_time = FPGA_time.count()/RUNS;
-  // cout << "Overall FPGA execution time " << FPGA_time.count() * 1000 << " ms " << endl;
+  double average_fpga_time = FPGA_time.count()/RUNS;
+  cout << "Overall FPGA execution time " << FPGA_time.count() * 1000 << " ms " << endl;
   cout << "Overall CPU execution time " << CPU_time.count() * 1000 << " ms" << endl;
-  // cout << "Average FPGA execution time " << average_fpga_time * 1000 << " ms " << endl;
+  cout << "Average FPGA execution time " << average_fpga_time * 1000 << " ms " << endl;
   cout << "Average CPU execution time " << average_cpu_time * 1000 << " ms" << endl;
-  // cout << "Speedup " << CPU_time.count() / FPGA_time.count() << endl;
+  cout << "Speedup " << CPU_time.count() / FPGA_time.count() << endl;
+  cout << "FPGA options per second: " << (int)SIZE/(average_fpga_time) << endl;
   cout << "CPU options per second: " << (int)SIZE/(average_cpu_time) << endl;
-  // cout << "FPGA options per second: " << (int)SIZE/(average_fpga_time) << endl;
 
-  printf("--------- \n");
+  cout << "--------------------" << endl;
 
-  // for (int i = 0; i < CU; i++) {
-  //   OCL_CHECK(err, err = q.enqueueUnmapMemObject(close_buf[i], closeprice[i]));
-  //   OCL_CHECK(err, err = q.enqueueUnmapMemObject(tte_buf[i], tte[i]));
-  // }
+  // --------------- Unmap the used resources from FPGA - Final Cleanup ---------------
 
-  // OCL_CHECK(err, err = q.finish());
+  for (int i = 0; i < SIZE; i++) {
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(call_buf[i], calloption[i]));
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(close_buf[i], closeprice[i]));
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(strike_buf[i], strikeprice[i]));
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(tte_buf[i], tte[i]));
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(out_buf[i], result[i]));
+  }
+
+  OCL_CHECK(err, err = q.finish());
 
   return (0);
 }
