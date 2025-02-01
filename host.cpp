@@ -129,6 +129,7 @@ int main(int argc, char ** argv) {
   // Step 3: Initialize Buffers and add it to FPGA
   // -----------------------------------------------------------------------------------
 
+  // TODO: Check if buffer can be lower to CU
   std::vector <cl::Buffer> call_buf(SIZE);
   std::vector <cl::Buffer> close_buf(SIZE);
   std::vector <cl::Buffer> strike_buf(SIZE);
@@ -181,7 +182,7 @@ int main(int argc, char ** argv) {
 
   for (int i = 0; i < SIZE; i++)
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
-      call_buf[i]
+      call_buf[i],
       close_buf[i],
       tte_buf[i],
       strike_buf[i],
@@ -190,6 +191,7 @@ int main(int argc, char ** argv) {
 
   // --------------- FPGA Execution ---------------
 
+  // TODO: Use enqueueNDRangeKernel instead of enqueueTask
   chrono::high_resolution_clock::time_point t1, t2;
   t1 = chrono::high_resolution_clock::now();
   for (int i = 0; i < RUNS; i++) {
@@ -247,7 +249,7 @@ int main(int argc, char ** argv) {
   cout << "correct = " << counter << " size = " << SIZE << endl;
   float score = (float) counter / SIZE;
   cout << "Score = " << score * 100 << " % " << endl;
-  printf("Mean dif = %f % \n", sum / SIZE)
+  printf("Mean dif = %f % \n", sum / SIZE);
   cout << "--------------------" << endl;
 
 
