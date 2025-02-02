@@ -65,6 +65,7 @@ XF_PROJ_ROOT = $(shell readlink -f $(COMMON_REPO))
 TARGET := hw
 HOST_ARCH := x86
 SYSROOT :=
+DEVICE := xilinx_u200_gen3x16_xdma_2_202110_1
 
 include ./utils.mk
 
@@ -96,11 +97,9 @@ endif
 
 ############################## Setting up Host Variables ##############################
 #Include Required Host Source Files
-CXXFLAGS += -I./common_fpga/includes/xcl2
-# Hardcoded line to find app_fixed.h although i run the needed source command
-CXXFLAGS += -I/tools/Xilinx/Vitis_HLS/2022.1/include
-# TODO: Move the logic all to the main.cpp with gpu and cpu
-# HOST_SRCS += ./common_fpga/includes/xcl2/xcl2.cpp ./host.cpp
+CXXFLAGS += -I ./common_fpga/includes/xcl2
+CXXFLAGS += -I /tools/Xilinx/Vitis_HLS/2022.1/include
+HOST_SRCS +=  ./common_fpga/includes/xcl2/xcl2.cpp ./host.cpp
 # Host compiler global settings
 CXXFLAGS += -fmessage-length=0
 LDFLAGS += -lrt -lstdc++
@@ -117,6 +116,8 @@ ifneq ($(TARGET), hw)
 	VPP_FLAGS += -g
 endif
 
+
+
 EXECUTABLE = ./$(KERNEL_NAME)
 EMCONFIG_DIR = $(TEMP_DIR)
 EMU_DIR = $(SDCARD)/data/emulation
@@ -125,33 +126,11 @@ EMU_DIR = $(SDCARD)/data/emulation
 BINARY_CONTAINERS += $(BUILD_DIR)/$(KERNEL_NAME).xclbin
 BINARY_CONTAINER_$(KERNEL_NAME)_OBJS += $(TEMP_DIR)/$(KERNEL_NAME).xo
 
-############################## C++ and Cuda Setup ##############################
-# Compiler and flags
-GCC = g++
-NVCC = nvcc
-CFLAGS = -O2
-CUDAFLAGS = -I./common/inc
-
-# Targets
-CPU_TARGET = black_scholes_cpu
-GPU_TARGET = black_scholes_cuda
-GPU_INFO_TARGET = gpu_info
-
-# Source files
-CPU_SRC = main.cpp
-GPU_SRC = BlackScholes.cu BlackScholes_gold.cpp
-GPU_INFO_SRC = gpu_info.cu
-
-# Object files
-CPU_OBJ = $(CPU_TARGET).o
-GPU_OBJ = $(GPU_TARGET).o
-GPU_INFO_OBJ = $(GPU_INFO_TARGET).o
-
 ############################## Setting Targets ##############################
 CP = cp -rf
 
 .PHONY: all clean cleanall docs emconfig
-all: check-devices $(EXECUTABLE) $(BINARY_CONTAINERS) emconfig sd_card $(CPU_TARGET) $(GPU_TARGET) $(GPU_INFO_TARGET)
+all: check-devices $(EXECUTABLE) $(BINARY_CONTAINERS) emconfig sd_card
 
 .PHONY: host
 host: $(EXECUTABLE)
@@ -176,15 +155,6 @@ else
 endif
 
 ############################## Setting Rules for Host (Building Host Executable) ##############################
-$(CPU_TARGET): $(CPU_SRC)
-	$(GCC) $(CFLAGS) $(CPU_SRC) -o $(CPU_OBJ)
-
-$(GPU_TARGET): $(GPU_SRC)
-	$(NVCC) $(CUDAFLAGS) $(GPU_SRC) -o $(GPU_OBJ)
-
-$(GPU_INFO_TARGET): $(GPU_INFO_SRC)
-	$(NVCC) $(GPU_INFO_SRC) -o $(GPU_INFO_OBJ)
-
 $(EXECUTABLE): $(HOST_SRCS) | check-xrt
 		$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(APPFLAGS)
 
@@ -203,6 +173,7 @@ else
 endif
 else
 ifeq ($(HOST_ARCH), x86)
+	$(ECHO) "Success: Building software!!!!"
 	$(EXECUTABLE) $(CMD_ARGS)
 endif
 endif
@@ -224,22 +195,12 @@ else
 endif
 endif
 
+
 ############################## Preparing sdcard ##############################
 sd_card: $(BINARY_CONTAINERS) $(EXECUTABLE) gen_run_app
 ifneq ($(HOST_ARCH), x86)
 	$(VPP) -p $(BUILD_DIR)/$(KERNEL_NAME).xclbin -t $(TARGET) --platform $(DEVICE) --package.out_dir $(PACKAGE_OUT) --package.rootfs $(EDGE_COMMON_SW)/rootfs.ext4 --package.sd_file $(SD_IMAGE_FILE) --package.sd_file xrt.ini --package.sd_file $(RUN_APP_SCRIPT) --package.sd_file $(EXECUTABLE) -o $(KERNEL_NAME).xclbin
 endif
-
-############################## BUild Rules ##############################
-# Run rules
-run_cpu: $(CPU_TARGET)
-	./$(CPU_OBJ)
-
-run_gpu: $(GPU_TARGET)
-	./$(GPU_OBJ)
-
-run_gpu_info: $(GPU_INFO_TARGET)
-	./$(GPU_INFO_OBJ)	
 
 ############################## Cleaning Rules ##############################
 # Cleaning stuff
@@ -247,10 +208,8 @@ clean:
 	-$(RMDIR) $(EXECUTABLE) $(XCLBIN)/{*sw_emu*,*hw_emu*}
 	-$(RMDIR) profile_* TempConfig system_estimate.xtxt *.rpt *.csv
 	-$(RMDIR) src/*.ll *v++* .Xil emconfig.json dltmp* xmltmp* *.log *.jou *.wcfg *.wdb
-	rm -f $(CPU_OBJ) $(GPU_OBJ) $(GPU_INFO_OBJ)
 
 cleanall: clean
 	-$(RMDIR) build_dir* sd_card*
 	-$(RMDIR) package.*
 	-$(RMDIR) _x* *xclbin.run_summary qemu-memory-_* emulation _vimage pl* start_simulation.sh *.xclbin
-	rm -f $(CPU_OBJ) $(GPU_OBJ) $(GPU_INFO_OBJ)

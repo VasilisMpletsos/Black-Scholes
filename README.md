@@ -10,9 +10,9 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 - [x] Python version in order to run on GPU
 - [x] Execute cuda version
 - [x] Match cuda version to run with my dataset
-- [ ] Intergrate Xilinx Makefile to mine
+- [x] Intergrate Xilinx Makefile to mine
 - [ ] Add all FPGA code & execute
-- [ ] Profiling for the algorithm
+- [ ] Profiling for the algorithm with various Vitis Settings
 - [ ] Contact Papaefstathiou & Aggelos after profiling
 
 
@@ -111,12 +111,7 @@ export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
 
 Makefile
 ```
-make -f Makefile_FPGA all TARGET=sw_emu
-```
-
-The actual command for building host.cpp is probably:
-```
-g++ -o ./kernelBlackScholes ./common_fpga/includes/xcl2/xcl2.cpp ./host.cpp -I ./common_fpga/includes/xcl2 -I /tools/Xilinx/Vitis_HLS/2022.1/include -Wall -O0 -g -std=c++11 -lrt -lstdc++
+make all TARGET=sw_emu
 ```
 
 Copy build
@@ -127,6 +122,15 @@ export XCL_EMULATION_MODE=sw_emu
 Start Vitis:
 ```
 vitis_hls
+```
+
+In order to connect to server you have to:
+```
+ssh -i ~/.ssh/id_rsa_server guest@skylla.physics.auth.gr
+```
+Copy files to the server:
+```
+scp -r ./Server/ guest@skylla.physics.auth.gr:/home/guest/BlackScholes
 ```
 
 In order to run the Simulation in Vitis:
