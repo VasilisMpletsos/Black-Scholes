@@ -163,14 +163,14 @@ int main(int argc, char ** argv) {
   std::vector < OPTION_TYPE_BOOL * > calloption(SIZE);
   std::vector < DTYPE * > closeprice(SIZE);
   std::vector < DTYPE * > strikeprice(SIZE);
-  std::vector < DTYPE * > tte(SIZE);
+  std::vector < DTYPE * > timetoexpire(SIZE);
   std::vector < DTYPE * > result(SIZE);
 
   for (int i = 0; i < SIZE; i++) {
-    calloption[i] = (DTYPE * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
+    calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
     closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
     strikeprice[i] = (DTYPE * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-    tte[i] = (DTYPE * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
+    timetoexpire[i] = (DTYPE * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
     result[i] = (DTYPE * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(DTYPE));
   }
 
@@ -214,7 +214,6 @@ int main(int argc, char ** argv) {
   // --------------- CPU Execution ---------------
 
   float cpu_option_prices[SIZE];
-  chrono::high_resolution_clock::time_point t1, t2;
   t1 = chrono::high_resolution_clock::now();
   for (int j = 0; j < RUNS; j++){
     for (int i = 0; i < SIZE; i++) {
@@ -233,7 +232,7 @@ int main(int argc, char ** argv) {
   float sum = 0.0;
   printf("Calculating Diffs \n");
   for (int i = 0; i < SIZE; i++) {
-    float dif = abs(cpu_option_prices[i] - (float) result[i]) / (cpu_option_prices[i]) * 100;
+    float dif = abs(cpu_option_prices[i] - (float) *result[i]) / (cpu_option_prices[i]) * 100;
     sum += dif;
     // If the difference is less that 0.5% we consider it correct result
     if (dif <= QoS)
@@ -241,7 +240,7 @@ int main(int argc, char ** argv) {
     else {
       printf("error at option %d \n", i);
       cout << "CPU result = " << cpu_option_prices[i] << endl;
-      cout << "FPGA result = " << (float)result[i] << endl;
+      cout << "FPGA result = " << (float) *result[i] << endl;
     }
   }
 
@@ -271,7 +270,7 @@ int main(int argc, char ** argv) {
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(call_buf[i], calloption[i]));
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(close_buf[i], closeprice[i]));
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(strike_buf[i], strikeprice[i]));
-    OCL_CHECK(err, err = q.enqueueUnmapMemObject(tte_buf[i], tte[i]));
+    OCL_CHECK(err, err = q.enqueueUnmapMemObject(tte_buf[i], timetoexpire[i]));
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(out_buf[i], result[i]));
   }
 
