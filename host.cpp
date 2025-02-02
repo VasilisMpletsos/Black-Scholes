@@ -10,7 +10,7 @@ typedef ap_uint<1> OPTION_TYPE_BOOL;
 #define RUNS 1000
 
 // number of compute units on FPGA
-#define CU 6 // at least 2 (1 for put and 1 for call)
+#define CU 2 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
@@ -43,12 +43,12 @@ int main(int argc, char ** argv) {
   // ------------------------------------------------------------------------------------
   // Step 1: Read Data
   // -----------------------------------------------------------------------------------
-  
+
   std::ifstream closeFile("./datasets/option_price.txt");
   std::ifstream strikeFile("./datasets/strike.txt");
   std::ifstream tteFile("./datasets/tte.txt");
   std::ifstream typeFile("./datasets/type.txt");
-  std::string binaryFile("./kernelBlackScholes.xclbin");
+  std::string binaryFile("./build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
 
   // Check if files opened successfully
     if (!closeFile || !strikeFile || !tteFile || !typeFile) {
@@ -130,14 +130,14 @@ int main(int argc, char ** argv) {
   // -----------------------------------------------------------------------------------
 
   // TODO: Check if buffer can be lower to CU
-  std::vector <cl::Buffer> call_buf(SIZE);
-  std::vector <cl::Buffer> close_buf(SIZE);
-  std::vector <cl::Buffer> strike_buf(SIZE);
-  std::vector <cl::Buffer> tte_buf(SIZE);
-  std::vector <cl::Buffer> out_buf(SIZE);
+  std::vector <cl::Buffer> call_buf(CU);
+  std::vector <cl::Buffer> close_buf(CU);
+  std::vector <cl::Buffer> strike_buf(CU);
+  std::vector <cl::Buffer> tte_buf(CU);
+  std::vector <cl::Buffer> out_buf(CU);
 
   // Create the buffers and allocate memory
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
     OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
     OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
@@ -145,7 +145,7 @@ int main(int argc, char ** argv) {
     OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
   }
 
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     int narg = 0;
     OCL_CHECK(err, err = krnls[i].setArg(narg++, call_buf[i]));
     OCL_CHECK(err, err = krnls[i].setArg(narg++, close_buf[i]));
@@ -160,13 +160,13 @@ int main(int argc, char ** argv) {
   // Step 3: Create buffers and initialize test values
   // ------------------------------------------------------------------------------------
 
-  std::vector < OPTION_TYPE_BOOL * > calloption(SIZE);
-  std::vector < DTYPE * > closeprice(SIZE);
-  std::vector < DTYPE * > strikeprice(SIZE);
-  std::vector < DTYPE * > timetoexpire(SIZE);
-  std::vector < DTYPE * > result(SIZE);
+  std::vector < OPTION_TYPE_BOOL * > calloption(CU);
+  std::vector < DTYPE * > closeprice(CU);
+  std::vector < DTYPE * > strikeprice(CU);
+  std::vector < DTYPE * > timetoexpire(CU);
+  std::vector < DTYPE * > result(CU);
 
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
     closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
     strikeprice[i] = (DTYPE * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
@@ -175,12 +175,9 @@ int main(int argc, char ** argv) {
   }
 
 
-  DTYPE FPGA_RISK_FREE_RATE = (DTYPE) RISK_FREE_RATE; // r
-  DTYPE FPGA_VOLATILITY = (DTYPE) VOLATILITY; // sigma
-
   //------------- Execution------------
 
-  for (int i = 0; i < SIZE; i++)
+  for (int i = 0; i < CU; i++)
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
       call_buf[i],
       close_buf[i],
@@ -191,18 +188,17 @@ int main(int argc, char ** argv) {
 
   // --------------- FPGA Execution ---------------
 
-  // TODO: Use enqueueNDRangeKernel instead of enqueueTask
   chrono::high_resolution_clock::time_point t1, t2;
   t1 = chrono::high_resolution_clock::now();
   for (int i = 0; i < RUNS; i++) {
-    for (int j = 0; j < SIZE; j++) {
+    for (int j = 0; j < CU; j++) {
       OCL_CHECK(err, err = q.enqueueTask(krnls[j]));
     }
   }
   OCL_CHECK(err, err = q.finish());
   t2 = chrono::high_resolution_clock::now();
 
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
       out_buf[i]
     }, CL_MIGRATE_MEM_OBJECT_HOST));
@@ -216,8 +212,7 @@ int main(int argc, char ** argv) {
   float cpu_option_prices[SIZE];
   t1 = chrono::high_resolution_clock::now();
   for (int j = 0; j < RUNS; j++){
-    for (int i = 0; i < SIZE; i++) {
-        float a, b;
+    for (int i = 0; i < CU; i++) {
         Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &cpu_option_prices[i]);
     }
   }
@@ -231,7 +226,7 @@ int main(int argc, char ** argv) {
   int counter = 0;
   float sum = 0.0;
   printf("Calculating Diffs \n");
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     float dif = abs(cpu_option_prices[i] - (float) *result[i]) / (cpu_option_prices[i]) * 100;
     sum += dif;
     // If the difference is less that 0.5% we consider it correct result
@@ -266,7 +261,7 @@ int main(int argc, char ** argv) {
 
   // --------------- Unmap the used resources from FPGA - Final Cleanup ---------------
 
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(call_buf[i], calloption[i]));
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(close_buf[i], closeprice[i]));
     OCL_CHECK(err, err = q.enqueueUnmapMemObject(strike_buf[i], strikeprice[i]));
