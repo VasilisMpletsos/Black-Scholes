@@ -129,28 +129,29 @@ int main(int argc, char ** argv) {
   // Step 3: Initialize Buffers and add it to FPGA
   // -----------------------------------------------------------------------------------
 
-  // TODO: Check if buffer can be lower to CU
   std::vector <cl::Buffer> call_buf(CU);
   std::vector <cl::Buffer> close_buf(CU);
   std::vector <cl::Buffer> strike_buf(CU);
   std::vector <cl::Buffer> tte_buf(CU);
   std::vector <cl::Buffer> out_buf(CU);
 
+  std::cout << "Setting buffers \n";
   // Create the buffers and allocate memory
   for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
     OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
+    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
     OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
     OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
   }
 
+  std::cout << "Setting arguments for kernel \n";
   for (int i = 0; i < CU; i++) {
     int narg = 0;
     OCL_CHECK(err, err = krnls[i].setArg(narg++, call_buf[i]));
     OCL_CHECK(err, err = krnls[i].setArg(narg++, close_buf[i]));
     OCL_CHECK(err, err = krnls[i].setArg(narg++, strike_buf[i]));
-    OCL_CHECK(err, err = krnls[i].setArg(narg++,tte_buf[i]));
+    OCL_CHECK(err, err = krnls[i].setArg(narg++, tte_buf[i]));
     OCL_CHECK(err, err = krnls[i].setArg(narg++, out_buf[i]));
   }
 
@@ -166,6 +167,7 @@ int main(int argc, char ** argv) {
   std::vector < DTYPE * > timetoexpire(CU);
   std::vector < DTYPE * > result(CU);
 
+  std::cout << "Enquing data \n";
   for (int i = 0; i < CU; i++) {
     calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
     closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
@@ -177,17 +179,19 @@ int main(int argc, char ** argv) {
 
   //------------- Execution------------
 
+  std::cout << "Pushing data \n";
   for (int i = 0; i < CU; i++)
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
       call_buf[i],
       close_buf[i],
-      tte_buf[i],
       strike_buf[i],
+      tte_buf[i],
     }, 0));
   OCL_CHECK(err, err = q.finish());
 
   // --------------- FPGA Execution ---------------
 
+  std::cout << "Starting execution \n";
   chrono::high_resolution_clock::time_point t1, t2;
   t1 = chrono::high_resolution_clock::now();
   for (int i = 0; i < RUNS; i++) {
@@ -198,6 +202,7 @@ int main(int argc, char ** argv) {
   OCL_CHECK(err, err = q.finish());
   t2 = chrono::high_resolution_clock::now();
 
+  std::cout << "Reading results \n";
   for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
       out_buf[i]
