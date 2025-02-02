@@ -102,6 +102,13 @@ Add the required sources
 source /opt/xilinx/xrt/setup.sh
 source /tools/Xilinx/Vitis/2022.1/settings64.sh
 export CPATH="/usr/include/x86_64-linux-gnu/"
+export XCL_EMULATION_MODE=sw_emu
+```
+For Server
+```
+source /opt/xilinx/xrt/setup.sh
+source /tools/Xilinx/Vitis/2023.1/settings64.sh
+export XCL_EMULATION_MODE=sw_emu
 ```
 
 And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx

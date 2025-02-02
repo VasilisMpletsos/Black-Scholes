@@ -43,7 +43,7 @@ int main(int argc, char ** argv) {
   // ------------------------------------------------------------------------------------
   // Step 1: Read Data
   // -----------------------------------------------------------------------------------
-  std::cout << "Reading data...\n";
+  
   std::ifstream closeFile("./datasets/option_price.txt");
   std::ifstream strikeFile("./datasets/strike.txt");
   std::ifstream tteFile("./datasets/tte.txt");
