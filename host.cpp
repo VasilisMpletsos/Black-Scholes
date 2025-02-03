@@ -3,14 +3,14 @@
 #include "utility.hpp"
 
 typedef ap_fixed <23,13,AP_RND_CONV > DTYPE;
-typedef ap_uint<1> OPTION_TYPE_BOOL;
+typedef ap_uint <1> OPTION_TYPE_BOOL;
 // typedef float DTYPE;
 
 // number of runs
-#define RUNS 1000
+#define RUNS 2
 
 // number of compute units on FPGA
-#define CU 2 // at least 2 (1 for put and 1 for call)
+#define CU 6 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
@@ -217,7 +217,7 @@ int main(int argc, char ** argv) {
   float cpu_option_prices[SIZE];
   t1 = chrono::high_resolution_clock::now();
   for (int j = 0; j < RUNS; j++){
-    for (int i = 0; i < CU; i++) {
+    for (int i = 0; i < SIZE; i++) {
         Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &cpu_option_prices[i]);
     }
   }
@@ -232,23 +232,27 @@ int main(int argc, char ** argv) {
   float sum = 0.0;
   printf("Calculating Diffs \n");
   for (int i = 0; i < CU; i++) {
-    float dif = abs(cpu_option_prices[i] - (float) *result[i]) / (cpu_option_prices[i]) * 100;
+    float fpga_value = (float) *result[i];
+    float dif = abs(cpu_option_prices[i] - fpga_value);
+    cout << "Option price= " << cpu_option_prices[i] << " | FPGA result= " << fpga_value << " | Diff= " << dif << endl;
     sum += dif;
     // If the difference is less that 0.5% we consider it correct result
-    if (dif <= QoS)
+    if (dif <= 2)
       counter++;
     else {
-      printf("error at option %d \n", i);
+      cout << "Error at option" << i << endl;
       cout << "CPU result = " << cpu_option_prices[i] << endl;
       cout << "FPGA result = " << (float) *result[i] << endl;
     }
   }
 
   cout << "--- FINAL OPTIONS --- " << endl;
-  cout << "correct = " << counter << " size = " << SIZE << endl;
+  cout << "Correct Predictions = " << counter << " | Size = " << SIZE << endl;
   float score = (float) counter / SIZE;
+  float mean_diff = sum / SIZE;
   cout << "Score = " << score * 100 << " % " << endl;
-  printf("Mean dif = %f % \n", sum / SIZE);
+  cout << "Sum = " << sum << endl;
+  cout << "Mean Diff = " << mean_diff << endl;
   cout << "--------------------" << endl;
 
 

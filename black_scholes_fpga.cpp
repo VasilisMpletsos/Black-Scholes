@@ -143,7 +143,7 @@ void compute(
 
 void write(hls::stream<FPGA_FIXED_POINT> &optionStream, FPGA_FIXED_POINT optionPrice[SIZE])
 {
-	LOOP_WRITE:for(int i=0; i< SIZE; i++){
+	LOOP_WRITE:for(int i=0; i<SIZE; i++){
         #pragma HLS PIPELINE II=1
 		optionPrice[i] = optionStream.read();
 	}
