@@ -15,7 +15,7 @@
 #include <cstring>
 #include <algorithm>
 typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
-typedef ap_uint<1> OPTION_TYPE_BOOL;
+typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 #define SIZE 878
 #define N 12
@@ -31,8 +31,8 @@ typedef ap_uint<1> OPTION_TYPE_BOOL;
 #define alpha5 1.330274429
 
 
-inline void calculate_prob_factors_d1_d2_fpga(FPGA_FIXED_POINT spotprice, FPGA_FIXED_POINT strike, FPGA_FIXED_POINT tte, FPGA_FIXED_POINT *d1, FPGA_FIXED_POINT *d2);
-inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input);
+// inline void calculate_prob_factors_d1_d2_fpga(FPGA_FIXED_POINT spotprice, FPGA_FIXED_POINT strike, FPGA_FIXED_POINT tte, FPGA_FIXED_POINT *d1, FPGA_FIXED_POINT *d2);
+// inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input);
 
 
 // Returns approximate value of e^x using sum of first n terms of Taylor Series
@@ -126,7 +126,12 @@ void compute(
         FPGA_FIXED_POINT inputExp = (FPGA_FIXED_POINT)(-(FPGA_FIXED_POINT)RISK_FREE_RATE * tte);
         FPGA_FIXED_POINT FutureValue = strike_price * exp_taylor_aprox(inputExp);
 
-        calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
+        // TODO: Fix the problem, is somewhere inside calculate_prob_factors_d1_d2_fpga and is causing core dump
+        // calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
+
+        // set d1 and d2
+        d1 = (FPGA_FIXED_POINT)0.0;
+        d2 = (FPGA_FIXED_POINT)0.5;
 
         if (optiontype) {
             FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
@@ -143,14 +148,16 @@ void compute(
 
 void write(hls::stream<FPGA_FIXED_POINT> &optionStream, FPGA_FIXED_POINT optionPrice[SIZE])
 {
-	LOOP_WRITE:for(int i=0; i<SIZE; i++){
+	LOOP_WRITE:
+    for(int i=0; i < SIZE; i++){
         #pragma HLS PIPELINE II=1
-		optionPrice[i] = optionStream.read();
+        optionPrice[i] = optionStream.read();
 	}
 }
 
 extern "C" {
-    void kernelBlackScholes(OPTION_TYPE_BOOL optionType[SIZE], FPGA_FIXED_POINT spotprice[SIZE], FPGA_FIXED_POINT strikeprice[SIZE],  FPGA_FIXED_POINT time[SIZE], FPGA_FIXED_POINT optionPrice[SIZE]) {
+    void kernelBlackScholes(OPTION_TYPE_BOOL optionType[SIZE], FPGA_FIXED_POINT spotprice[SIZE], FPGA_FIXED_POINT strikeprice[SIZE],  FPGA_FIXED_POINT time[SIZE], FPGA_FIXED_POINT optionPrice[SIZE]){
+
         #pragma HLS INTERFACE m_axi port=optionType bundle=gmem0
         #pragma HLS INTERFACE m_axi port=spotprice bundle=gmem1
         #pragma HLS INTERFACE m_axi port=strikeprice bundle=gmem2
@@ -174,5 +181,5 @@ extern "C" {
         read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionType,spotprice,strikeprice,time);
         compute(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionStream);
         write(optionStream, optionPrice);
-  }
+    }
 }
