@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
-typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed <32,10,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 #define SIZE 878
@@ -51,17 +51,33 @@ inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT *d1,
     FPGA_FIXED_POINT *d2)
 {
-    FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
-    FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT) log((float)logInput);
-    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT)sqrt((float)tte);
-    FPGA_FIXED_POINT powerVal = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
-    FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
-    FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
-    FPGA_FIXED_POINT nD2 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE - powerVal2) * tte;
-    FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)VOLATILITY * sqrtVal);
+
+    // TODO: logInput & sqrtVal is the one that cause problems maybe the cast to the variable is a problem
+    // FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
+    // FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT) log((float)logInput);
+    // FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) sqrt((float)tte);
+    // FPGA_FIXED_POINT powerVal = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
+    // FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
+    // FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
+    // FPGA_FIXED_POINT nD2 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE - powerVal2) * tte;
+    // FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)VOLATILITY * sqrtVal + (FPGA_FIXED_POINT)1e-3);
+
+    float spotprice_float = (float)spotprice;
+    float strike_float = (float)strike;
+    float tte_float = (float)tte;
+
+    float logInput = spotprice_float/strike_float;
+    float logVal = log(logInput);
+    float sqrtVal = sqrt(tte_float);
+    float powerVal = VOLATILITY * VOLATILITY;
+    float powerVal2 = powerVal * 0.5;
+    float nD1 = logVal + (RISK_FREE_RATE + powerVal2) * tte_float;
+    float nD2 = logVal + (RISK_FREE_RATE - powerVal2) * tte_float;
+    float denum = VOLATILITY * sqrtVal + 1e-6;
     *d1 = (FPGA_FIXED_POINT)(nD1 / denum);
     *d2 = (FPGA_FIXED_POINT)(nD2 / denum);
 }
+
 
 inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
     // Approximation of the CDF based on Abramowitz and Stegun  
@@ -127,11 +143,7 @@ void compute(
         FPGA_FIXED_POINT FutureValue = strike_price * exp_taylor_aprox(inputExp);
 
         // TODO: Fix the problem, is somewhere inside calculate_prob_factors_d1_d2_fpga and is causing core dump
-        // calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
-
-        // set d1 and d2
-        d1 = (FPGA_FIXED_POINT)0.0;
-        d2 = (FPGA_FIXED_POINT)0.5;
+        calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
 
         if (optiontype) {
             FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
