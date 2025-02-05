@@ -76,6 +76,27 @@ int main(int argc, char ** argv) {
         std::getline(typeFile, line);
         callTypes[i] = std::stoi(line);  // Assuming type is an integer
     }
+
+
+    // for (int i = 0; i < SIZE; i++) {
+    //   cout << "Close Price: " << closePrices[i] << " | Strike Price: " << strikePrices[i] << " | Time to Expire: " << tte[i] << " | Call Type: " << callTypes[i] << endl;
+    //   float logInput = closePrices[i]/strikePrices[i];
+    //   cout << "Log Input: " << logInput << endl;
+    //   float logVal = log(logInput);
+    //   cout << "Log Value: " << logVal << endl;
+    //   float sqrtVal = sqrt(tte[i]);
+    //   cout << "Sqrt Value: " << sqrtVal << endl;
+    //   float powerVal = VOLATILITY * VOLATILITY;
+    //   float powerVal2 = powerVal * 0.5;
+    //   float nD1 = logVal + (RISK_FREE_RATE + powerVal2) * tte[i];
+    //   float nD2 = logVal + (RISK_FREE_RATE - powerVal2) * tte[i];
+    //   cout << "nD1: " << nD1 << " | nD2: " << nD2 << endl;
+    //   float denum = VOLATILITY * sqrtVal + 1e-6;
+    //   cout << "Denum: " << denum << endl;
+    //   float d1 = (float)(nD1 / denum);
+    //   float d2 = (float)(nD2 / denum);
+    //   cout << "d1: " << d1 << " | d2: " << d2 << endl;
+    // }
  
   // ------------------------------------------------------------------------------------
   // Step 2: Initialize the OpenCL environment
@@ -176,6 +197,15 @@ int main(int argc, char ** argv) {
     result[i] = (DTYPE * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(DTYPE));
   }
 
+  // 3. Copy host data into mapped buffers.
+for (int i = 0; i < SIZE; i++) {
+    // If using one compute unit:
+    calloption[0][i] = (OPTION_TYPE_BOOL) callTypes[i];
+    closeprice[0][i] = closePrices[i];
+    strikeprice[0][i] = strikePrices[i];
+    timetoexpire[0][i] = tte[i];
+}
+
 
   //------------- Execution------------
 
@@ -189,23 +219,24 @@ int main(int argc, char ** argv) {
     }, 0));
   OCL_CHECK(err, err = q.finish());
 
+
   // --------------- FPGA Execution ---------------
 
   std::cout << "Starting execution \n";
   chrono::high_resolution_clock::time_point t1, t2;
   t1 = chrono::high_resolution_clock::now();
-  for (int i = 0; i < RUNS; i++) {
-    for (int j = 0; j < CU; j++) {
-      OCL_CHECK(err, err = q.enqueueTask(krnls[j]));
+  for (int run = 0; run < RUNS; run++) {
+    for (int cu = 0; cu < CU; cu++) {
+      OCL_CHECK(err, err = q.enqueueTask(krnls[cu]));
     }
   }
   OCL_CHECK(err, err = q.finish());
   t2 = chrono::high_resolution_clock::now();
 
   std::cout << "Reading results \n";
-  for (int i = 0; i < CU; i++) {
+  for (int cu = 0; cu < CU; cu++) {
     OCL_CHECK(err, err = q.enqueueMigrateMemObjects({
-      out_buf[i]
+      out_buf[cu]
     }, CL_MIGRATE_MEM_OBJECT_HOST));
   }
   OCL_CHECK(err, err = q.finish());
@@ -221,6 +252,9 @@ int main(int argc, char ** argv) {
         Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &cpu_option_prices[i]);
     }
   }
+  // for (int i = 0; i < SIZE; i++) {
+  //   cout << cpu_option_prices[i] << " , ";
+  // }
   t2 = chrono::high_resolution_clock::now();
   chrono::duration <double, std::milli> CPU_time = t2 - t1;
   printf("CPU Time: %f ms\n", CPU_time.count());
@@ -231,19 +265,13 @@ int main(int argc, char ** argv) {
   int counter = 0;
   float sum = 0.0;
   printf("Calculating Diffs \n");
-  for (int i = 0; i < CU; i++) {
-    float fpga_value = (float) *result[i];
+  for (int i = 0; i < SIZE; i++) {
+    float fpga_value = (float) result[0][i];
     float dif = abs(cpu_option_prices[i] - fpga_value);
     cout << "Option price= " << cpu_option_prices[i] << " | FPGA result= " << fpga_value << " | Diff= " << dif << endl;
     sum += dif;
     // If the difference is less that 0.5% we consider it correct result
-    if (dif <= 2)
-      counter++;
-    else {
-      cout << "Error at option" << i << endl;
-      cout << "CPU result = " << cpu_option_prices[i] << endl;
-      cout << "FPGA result = " << (float) *result[i] << endl;
-    }
+    if (dif <= 2) counter++;
   }
 
   cout << "--- FINAL OPTIONS --- " << endl;
