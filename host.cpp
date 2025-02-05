@@ -10,7 +10,7 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 #define RUNS 2
 
 // number of compute units on FPGA
-#define CU 6 // at least 2 (1 for put and 1 for call)
+#define CU 2 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
@@ -198,13 +198,14 @@ int main(int argc, char ** argv) {
   }
 
   // 3. Copy host data into mapped buffers.
-for (int i = 0; i < SIZE; i++) {
-    // If using one compute unit:
-    calloption[0][i] = (OPTION_TYPE_BOOL) callTypes[i];
-    closeprice[0][i] = closePrices[i];
-    strikeprice[0][i] = strikePrices[i];
-    timetoexpire[0][i] = tte[i];
-}
+  for (int cu = 0; cu < CU; cu++) {
+    for (int i = 0; i < SIZE; i++) {
+        calloption[cu][i] = callTypes[i];
+        closeprice[cu][i] = closePrices[i];
+        strikeprice[cu][i] = strikePrices[i];
+        timetoexpire[cu][i] = tte[i];
+    }
+  }
 
 
   //------------- Execution------------
