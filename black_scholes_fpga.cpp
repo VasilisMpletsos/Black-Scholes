@@ -51,13 +51,9 @@ inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT *d1,
     FPGA_FIXED_POINT *d2)
 {
-
-    // TODO: logInput & sqrtVal is the one that cause problems maybe the cast to the variable is a problem
-    FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) 1;
-    // FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
+    FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
     FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT) log((float)logInput);
-    // FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) sqrt((float)tte);
-    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) 1;
+    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) sqrt((float)tte);
     FPGA_FIXED_POINT powerVal = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
     FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
     FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
@@ -133,7 +129,6 @@ void compute(
 
         // TODO: Fix the problem, is somewhere inside calculate_prob_factors_d1_d2_fpga and is causing core dump
         calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
-
 
         if (optiontype) {
             FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
