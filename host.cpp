@@ -242,7 +242,7 @@ int main(int argc, char ** argv) {
   }
   OCL_CHECK(err, err = q.finish());
 
-  chrono::duration < double > FPGA_time = t2 - t1;
+  chrono::duration < double > FPGA_time = (t2 - t1) / CU;
 
   // --------------- CPU Execution ---------------
 
