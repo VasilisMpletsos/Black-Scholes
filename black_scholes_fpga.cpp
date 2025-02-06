@@ -58,15 +58,16 @@ inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
     FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
     FPGA_FIXED_POINT nD2 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE - powerVal2) * tte;
-    FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)VOLATILITY * sqrtVal + (FPGA_FIXED_POINT)1e-6);
+    FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)VOLATILITY * sqrtVal;
     *d1 = (FPGA_FIXED_POINT)(nD1 / denum);
     *d2 = (FPGA_FIXED_POINT)(nD2 / denum);
 }
 
 
 inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
-    // Approximation of the CDF based on Abramowitz and Stegun  
-    FPGA_FIXED_POINT kappa = (FPGA_FIXED_POINT)1.0 / ((FPGA_FIXED_POINT)1.0 + (FPGA_FIXED_POINT)gamma * input);
+    // Approximation of the CDF based on Abramowitz and Stegun
+    FPGA_FIXED_POINT abs_input = (FPGA_FIXED_POINT)std::fabs((float)input);
+    FPGA_FIXED_POINT kappa = (FPGA_FIXED_POINT)1.0 / ((FPGA_FIXED_POINT)1.0 + (FPGA_FIXED_POINT)gamma * abs_input);
     FPGA_FIXED_POINT polynomial_approximation = kappa * ((FPGA_FIXED_POINT)alpha1 + kappa * ((FPGA_FIXED_POINT)alpha2 + kappa * ((FPGA_FIXED_POINT)alpha3 + kappa * ((FPGA_FIXED_POINT)alpha4 + (FPGA_FIXED_POINT)alpha5 * kappa))));
     return polynomial_approximation;
 }
@@ -78,7 +79,7 @@ inline FPGA_FIXED_POINT fast_cdf_approximation_fpga(FPGA_FIXED_POINT input) {
     FPGA_FIXED_POINT normal_prime = expVal * (FPGA_FIXED_POINT)inverse_sqrt_2pi;
     FPGA_FIXED_POINT polynomial_approximation = polynomial_approximation_fpga(input);
     FPGA_FIXED_POINT cdn = normal_prime * polynomial_approximation;
-    if (input >= 0){
+    if (input > 0){
         return ((FPGA_FIXED_POINT)1.0 - cdn);
     }
     return cdn;
@@ -127,17 +128,15 @@ void compute(
         FPGA_FIXED_POINT inputExp = (FPGA_FIXED_POINT)(-(FPGA_FIXED_POINT)RISK_FREE_RATE * tte);
         FPGA_FIXED_POINT FutureValue = strike_price * exp_taylor_aprox(inputExp);
 
-        // TODO: Fix the problem, is somewhere inside calculate_prob_factors_d1_d2_fpga and is causing core dump
         calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
 
+        FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
+        FPGA_FIXED_POINT Nd2 = fast_cdf_approximation_fpga(d2);
+
         if (optiontype) {
-            FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
-            FPGA_FIXED_POINT Nd2 = fast_cdf_approximation_fpga(d2);
             optionPrice = spot_price * Nd1 - FutureValue * Nd2;
         } else {
-            FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(-d1);
-            FPGA_FIXED_POINT Nd2 = fast_cdf_approximation_fpga(-d2);
-            optionPrice = FutureValue * Nd2 - spot_price * Nd1;
+            optionPrice = FutureValue * ((FPGA_FIXED_POINT)1-Nd2) - spot_price * ((FPGA_FIXED_POINT)1-Nd1);
         }
         optionResultStream << optionPrice;
 	}

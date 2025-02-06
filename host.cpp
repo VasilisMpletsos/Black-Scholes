@@ -7,10 +7,10 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 // typedef float DTYPE;
 
 // number of runs
-#define RUNS 2
+#define RUNS 1
 
 // number of compute units on FPGA
-#define CU 2 // at least 2 (1 for put and 1 for call)
+#define CU 6 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country

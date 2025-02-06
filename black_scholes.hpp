@@ -6,7 +6,7 @@
 #define alpha3 1.781477937
 #define alpha4 -1.821255978
 #define alpha5 1.330274429
-
+#include <cmath>
 using namespace std;
 
 inline void calculate_prob_factors_d1_d2(float spotprice, float strike, float rate, float volatility, float time, float *d1, float *d2);
@@ -30,7 +30,7 @@ float normal_cdf(float x) {
 // This is a quicker version of the CDF calculation
 inline float polynomial_approximation(float input) {
   // Approximation of the CDF based on Abramowitz and Stegun
-  float kappa = 1.0 / (1.0 + gamma * input);
+  float kappa = 1.0 / (1.0 + gamma * fabs(input));
   float polynomial_approximation = kappa * (alpha1 + kappa * (alpha2 + kappa * (alpha3 + kappa * (alpha4 + alpha5 * kappa))));
   return polynomial_approximation;
 }
@@ -40,7 +40,7 @@ inline float fast_cdf_approximation(float input) {
   float normal_prime = expVal * inverse_sqrt_2pi;
   float cdn = normal_prime * polynomial_approximation(input);
 
-  if (input >= 0.0) {
+  if (input > 0.0) {
     return (1.0 - cdn);
   } 
   return cdn;
@@ -65,19 +65,15 @@ void Black_Scholes_CPU(int optionType, float spot_price, float strike_price, flo
 
   // Step 2: Calculate the price of the option
   float FutureValue = strike_price * exp((-rate) * time);
+  float Nd1 = fast_cdf_approximation(d1);
+  float Nd2 = fast_cdf_approximation(d2);
 
   if (optionType) {
-    float Nd1 = fast_cdf_approximation(d1);
-    float Nd2 = fast_cdf_approximation(d2);
     // C = (spot price * N(d1)) - (strike_price * e^(-rt) * N(d2))
     *optionPrice = spot_price * Nd1 - FutureValue * Nd2;
   } else {
-    // This is the case for a put option
     // P = (strike_price * e^(-rt) * N(-d2)) − (spot price * N(-d1))
-    float Nd1 = fast_cdf_approximation(-d1);
-    float Nd2 = fast_cdf_approximation(-d2);
-    
-    *optionPrice = FutureValue * Nd2 - spot_price * Nd1;
+    *optionPrice = FutureValue * (1-Nd2) - spot_price * (1-Nd1);
   }
   
 }
