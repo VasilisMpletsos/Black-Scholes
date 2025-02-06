@@ -38,7 +38,7 @@ nvcc gpu_info.cu -o gpu_info.o
 
 For cuda compile with nvcc and run
 ```
-nvcc -I./common/inc BlackScholes.cu BlackScholes_gold.cpp -o black_scholes_cuda.o
+nvcc -I./common_cuda/inc BlackScholes.cu BlackScholes_gold.cpp -o black_scholes_cuda.o
 ./black_scholes_cuda.o
 ```
 To create them all run "make" to start makefile.

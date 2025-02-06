@@ -132,10 +132,10 @@ int main(int argc, char **argv)
     //Read back GPU results to compare them to CPU results
     checkCudaErrors(cudaMemcpy(h_OptionResultGPU, d_OptionResult, MEMORY_SIZE_ALLOCATION_FLOAT, cudaMemcpyDeviceToHost));
 
-    // // Iterate through results and print
-    // for (int i = 0; i < DATA_SIZE; i++) {
-    //     printf("Option %d: %.5f\n", i+1, h_OptionResultGPU[i]);
-    // }
+    // Iterate through results and print
+    for (int i = 0; i < DATA_SIZE; i++) {
+        printf("Option %d: %.5f\n", i+1, h_OptionResultGPU[i]);
+    }
 
     printf("Cleaning GPU allocated memory.\n");
     checkCudaErrors(cudaFree(d_OptionYears));
