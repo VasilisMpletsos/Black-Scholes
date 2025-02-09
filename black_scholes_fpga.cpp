@@ -14,11 +14,11 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
-typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 #define SIZE 858
-#define N 12
+#define N 24
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
 #define VOLATILITY 0.25
@@ -30,19 +30,45 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 #define alpha4 -1.821255978
 #define alpha5 1.330274429
 
+// Constants redefined with higher precision
+#define MIN_TTE 0.000001f
+#define SQRT_CORRECTION 1000.0f
+
 
 // inline void calculate_prob_factors_d1_d2_fpga(FPGA_FIXED_POINT spotprice, FPGA_FIXED_POINT strike, FPGA_FIXED_POINT tte, FPGA_FIXED_POINT *d1, FPGA_FIXED_POINT *d2);
 // inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input);
 
 
-// Returns approximate value of e^x using sum of first n terms of Taylor Series
 inline FPGA_FIXED_POINT exp_taylor_aprox(FPGA_FIXED_POINT x) {
-    FPGA_FIXED_POINT sum = 1; // Initialize sum of series to the first term (e^0 = 1)
-    for (int i = N - 1; i > 0; --i) {
-        sum = (FPGA_FIXED_POINT)1 + (x * sum) / (FPGA_FIXED_POINT)i;
+    FPGA_FIXED_POINT sum = 1.0;
+    FPGA_FIXED_POINT term = 1.0;
+    
+    for (int i = 1; i <= N; ++i) {
+        term = term * x / (FPGA_FIXED_POINT)i;
+        sum = sum + term;
     }
     return sum;
 }
+
+
+// inline void calculate_prob_factors_d1_d2_fpga(
+//     FPGA_FIXED_POINT spotprice,
+//     FPGA_FIXED_POINT strike,
+//     FPGA_FIXED_POINT tte,
+//     FPGA_FIXED_POINT *d1,
+//     FPGA_FIXED_POINT *d2)
+// {
+//     FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
+//     FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT) log((float)logInput);
+//     FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) sqrt((float)tte);
+//     FPGA_FIXED_POINT powerVal = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
+//     FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
+//     FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
+//     FPGA_FIXED_POINT nD2 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE - powerVal2) * tte;
+//     FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)VOLATILITY * sqrtVal;
+//     *d1 = (FPGA_FIXED_POINT)(nD1 / denum);
+//     *d2 = (FPGA_FIXED_POINT)(nD2 / denum);
+// }
 
 inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT spotprice,
@@ -51,16 +77,28 @@ inline void calculate_prob_factors_d1_d2_fpga(
     FPGA_FIXED_POINT *d1,
     FPGA_FIXED_POINT *d2)
 {
-    FPGA_FIXED_POINT logInput = (FPGA_FIXED_POINT) (spotprice/strike);
-    FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT) log((float)logInput);
-    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT) sqrt((float)tte);
-    FPGA_FIXED_POINT powerVal = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
-    FPGA_FIXED_POINT powerVal2 = powerVal * (FPGA_FIXED_POINT)0.5;
-    FPGA_FIXED_POINT nD1 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE + powerVal2) * tte;
-    FPGA_FIXED_POINT nD2 = logVal + (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)RISK_FREE_RATE - powerVal2) * tte;
+    #pragma HLS INLINE
+    
+    /// Calculate log(S/K) with higher precision
+    FPGA_FIXED_POINT ratio = spotprice/strike;
+    FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT)log((float)ratio);
+    
+    // Calculate sqrt(tte) directly
+    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT)sqrt((float)tte);
+    
+    // Calculate volatility terms with higher precision
+    FPGA_FIXED_POINT sigma_squared = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
+    FPGA_FIXED_POINT sigma_squared_half = sigma_squared * (FPGA_FIXED_POINT)0.5;
+    
+    // Calculate d1 numerator
+    FPGA_FIXED_POINT nD1 = logVal + ((FPGA_FIXED_POINT)RISK_FREE_RATE + sigma_squared_half) * tte;
+    
+    // Calculate denominator
     FPGA_FIXED_POINT denum = (FPGA_FIXED_POINT)VOLATILITY * sqrtVal;
-    *d1 = (FPGA_FIXED_POINT)(nD1 / denum);
-    *d2 = (FPGA_FIXED_POINT)(nD2 / denum);
+    
+    // Calculate d1 and d2
+    *d1 = nD1 / denum;
+    *d2 = *d1 - denum;
 }
 
 
@@ -72,15 +110,20 @@ inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
     return polynomial_approximation;
 }
 
+// Also need to update the fast_cdf_approximation to use high precision
 inline FPGA_FIXED_POINT fast_cdf_approximation_fpga(FPGA_FIXED_POINT input) {
-    FPGA_FIXED_POINT inputSquared = (FPGA_FIXED_POINT)(input * input);
-    FPGA_FIXED_POINT val = (FPGA_FIXED_POINT)((FPGA_FIXED_POINT)0.5 * -inputSquared);
+    FPGA_FIXED_POINT inputSquared = input * input;
+    FPGA_FIXED_POINT val = (FPGA_FIXED_POINT)(-0.5) * inputSquared;
     FPGA_FIXED_POINT expVal = exp_taylor_aprox(val);
     FPGA_FIXED_POINT normal_prime = expVal * (FPGA_FIXED_POINT)inverse_sqrt_2pi;
-    FPGA_FIXED_POINT polynomial_approximation = polynomial_approximation_fpga(input);
-    FPGA_FIXED_POINT cdn = normal_prime * polynomial_approximation;
-    if (input > 0){
-        return ((FPGA_FIXED_POINT)1.0 - cdn);
+    FPGA_FIXED_POINT cdn = normal_prime * polynomial_approximation_fpga(input);
+
+    // Ensure CDF stays within [0,1]
+    if (cdn < 0) cdn = 0;
+    if (cdn > 1) cdn = 1;
+    
+    if (input > 0) {
+        return (FPGA_FIXED_POINT)1.0 - cdn;
     }
     return cdn;
 }
@@ -127,17 +170,29 @@ void compute(
         FPGA_FIXED_POINT d1,d2;
         FPGA_FIXED_POINT inputExp = (FPGA_FIXED_POINT)(-(FPGA_FIXED_POINT)RISK_FREE_RATE * tte);
         FPGA_FIXED_POINT FutureValue = strike_price * exp_taylor_aprox(inputExp);
+        
 
         calculate_prob_factors_d1_d2_fpga(spot_price, strike_price, tte, &d1, &d2);
 
         FPGA_FIXED_POINT Nd1 = fast_cdf_approximation_fpga(d1);
         FPGA_FIXED_POINT Nd2 = fast_cdf_approximation_fpga(d2);
 
+        // Ensure probabilities are within bounds
+        if (Nd1 < 0) Nd1 = 0;
+        if (Nd1 > 1) Nd1 = 1;
+        if (Nd2 < 0) Nd2 = 0;
+        if (Nd2 > 1) Nd2 = 1;
+
         if (optiontype) {
             optionPrice = spot_price * Nd1 - FutureValue * Nd2;
         } else {
-            optionPrice = FutureValue * ((FPGA_FIXED_POINT)1-Nd2) - spot_price * ((FPGA_FIXED_POINT)1-Nd1);
+            optionPrice = FutureValue * ((FPGA_FIXED_POINT)1.0 - Nd2) - 
+                         spot_price * ((FPGA_FIXED_POINT)1.0 - Nd1);
         }
+
+        // Ensure non-negative option prices
+        if (optionPrice < 0) optionPrice = 0;
+
         optionResultStream << optionPrice;
 	}
 }

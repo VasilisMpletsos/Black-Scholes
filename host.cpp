@@ -2,15 +2,15 @@
 
 #include "utility.hpp"
 
-typedef ap_fixed <23,13,AP_RND_CONV > DTYPE;
+// typedef ap_fixed <23,13,AP_RND_CONV > FPGA_FIXED_POINT;
+typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
-// typedef float DTYPE;
 
 // number of runs
 #define RUNS 1
 
 // number of compute units on FPGA
-#define CU 6 // at least 2 (1 for put and 1 for call)
+#define CU 1 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
@@ -19,20 +19,20 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 #define VOLATILITY 0.25
 
 // Import various libraries
-// #include "string.h"
+#include "string.h"
 #include <cmath>
-// #include "stdio.h"
+#include "stdio.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
-// #include <sstream>
-// #include <unistd.h>
-// #include <stdint.h>
-// #include <stdlib.h>
-// #include <time.h>
+#include <sstream>
+#include <unistd.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
 #include <cstdio>
 #include <cstring>
-// #include <algorithm>
+#include <algorithm>
 #include <chrono>
 
 // Include black scholes implementation
@@ -160,10 +160,10 @@ int main(int argc, char ** argv) {
   // Create the buffers and allocate memory
   for (int i = 0; i < CU; i++) {
     OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
-    OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-    OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(DTYPE), NULL, & err));
-    OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(DTYPE), NULL, & err));
+    OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
   }
 
   std::cout << "Setting arguments for kernel \n";
@@ -183,18 +183,18 @@ int main(int argc, char ** argv) {
   // ------------------------------------------------------------------------------------
 
   std::vector < OPTION_TYPE_BOOL * > calloption(CU);
-  std::vector < DTYPE * > closeprice(CU);
-  std::vector < DTYPE * > strikeprice(CU);
-  std::vector < DTYPE * > timetoexpire(CU);
-  std::vector < DTYPE * > result(CU);
+  std::vector < FPGA_FIXED_POINT * > closeprice(CU);
+  std::vector < FPGA_FIXED_POINT * > strikeprice(CU);
+  std::vector < FPGA_FIXED_POINT * > timetoexpire(CU);
+  std::vector < FPGA_FIXED_POINT * > result(CU);
 
   std::cout << "Enquing data \n";
   for (int i = 0; i < CU; i++) {
     calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
-    closeprice[i] = (DTYPE * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-    strikeprice[i] = (DTYPE * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-    timetoexpire[i] = (DTYPE * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(DTYPE));
-    result[i] = (DTYPE * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(DTYPE));
+    closeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
+    strikeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
+    timetoexpire[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
+    result[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(FPGA_FIXED_POINT));
   }
 
   // 3. Copy host data into mapped buffers.
@@ -269,12 +269,19 @@ int main(int argc, char ** argv) {
   for (int i = 0; i < SIZE; i++) {
     float fpga_value = (float) result[0][i];
     float dif = abs(cpu_option_prices[i] - fpga_value);
-    cout << "Option price= " << cpu_option_prices[i] << " | FPGA result= " << fpga_value << " | Diff= " << dif << endl;
+    if (dif > 2){
+      cout << "----------------------------------------------------------------------------" << endl;
+      cout << "Call Type " << callTypes[i] << endl;
+      cout << "Strike Price " << strikePrices[i] << endl;
+      cout << "Time to expirty " << tte[i]  << endl;
+      cout << "CPU result " << i+1 << " = " << cpu_option_prices[i] << " | FPGA result= " << fpga_value << " | Diff= " << dif << endl;
+    }
     sum += dif;
     // If the difference is less that 0.5% we consider it correct result
     if (dif <= 2) counter++;
   }
 
+  cout << endl;
   cout << "--- FINAL OPTIONS --- " << endl;
   cout << "Correct Predictions = " << counter << " | Size = " << SIZE << endl;
   float score = (float) counter / SIZE;
