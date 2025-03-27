@@ -119,12 +119,12 @@ int main(int argc, char **argv)
         getLastCudaError("BlackScholesGPU() execution failed\n");
     }
 
-    sdkStopTimer(&hTimer);
     checkCudaErrors(cudaDeviceSynchronize());
+    sdkStopTimer(&hTimer);
     gpuTime = sdkGetTimerValue(&hTimer) / REPEAT_ITERATIONS_EXPERIMENT;
 
     //Both call and put is calculated
-    printf("Black Scholes GPU() average execution time: %f msec\n", gpuTime);
+    printf("Black Scholes GPU() average execution time: %f msec\n", gpuTime * 1000);
     printf("Effective memory bandwidth: %f GB/s\n", ((double)(5 * DATA_SIZE * sizeof(float)) * 1E-9) / (gpuTime * 1E-3));
     printf("Gigaoptions per second: %f \n\n", ((double)(DATA_SIZE) * 1E-9) / (gpuTime * 1E-3));
 
@@ -133,9 +133,9 @@ int main(int argc, char **argv)
     checkCudaErrors(cudaMemcpy(h_OptionResultGPU, d_OptionResult, MEMORY_SIZE_ALLOCATION_FLOAT, cudaMemcpyDeviceToHost));
 
     // Iterate through results and print
-    for (int i = 0; i < DATA_SIZE; i++) {
-        printf("Option %d: %.5f\n", i+1, h_OptionResultGPU[i]);
-    }
+    // for (int i = 0; i < DATA_SIZE; i++) {
+    //     printf("Option %d: %.5f\n", i+1, h_OptionResultGPU[i]);
+    // }
 
     printf("Cleaning GPU allocated memory.\n");
     checkCudaErrors(cudaFree(d_OptionYears));
