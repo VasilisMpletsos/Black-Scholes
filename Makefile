@@ -110,7 +110,32 @@ endif
 
 ############################## Setting up Kernel Variables ##############################
 # Kernel compiler global settings
-VPP_FLAGS += -t $(TARGET) --platform $(DEVICE) --connectivity.nk $(KERNEL_NAME):6  --connectivity.sp $(KERNEL_NAME)_6.spotprice:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.time:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.optionPrice:HBM[6] --connectivity.sp $(KERNEL_NAME)_5.spotprice:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.time:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.optionPrice:HBM[5] --connectivity.sp $(KERNEL_NAME)_4.spotprice:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.time:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.optionPrice:HBM[4] --connectivity.sp $(KERNEL_NAME)_3.spotprice:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.time:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.optionPrice:HBM[3] --connectivity.sp $(KERNEL_NAME)_2.spotprice:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.time:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.optionPrice:HBM[2] --connectivity.sp $(KERNEL_NAME)_1.spotprice:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.time:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.optionPrice:HBM[1] --report_level estimate --profile.data all:all:all --profile.stall all:all --profile.exec all:all --trace_memory HBM --kernel_frequency 300  --hls.clock 300000000:$(KERNEL_NAME) --save-temps
+# VPP_FLAGS += -t $(TARGET) --platform $(DEVICE) --connectivity.nk $(KERNEL_NAME):6 --connectivity.sp $(KERNEL_NAME)_6.optionType:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.spotprice:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.strikeprice:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.time:HBM[6] --connectivity.sp $(KERNEL_NAME)_6.optionPrice:HBM[6] --connectivity.sp $(KERNEL_NAME)_5.optionType:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.spotprice:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.strikeprice:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.time:HBM[5] --connectivity.sp $(KERNEL_NAME)_5.optionPrice:HBM[5] --connectivity.sp $(KERNEL_NAME)_4.optionType:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.spotprice:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.strikeprice:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.time:HBM[4] --connectivity.sp $(KERNEL_NAME)_4.optionPrice:HBM[4] --connectivity.sp $(KERNEL_NAME)_3.optionType:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.spotprice:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.strikeprice:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.time:HBM[3] --connectivity.sp $(KERNEL_NAME)_3.optionPrice:HBM[3] --connectivity.sp $(KERNEL_NAME)_2.optionType:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.spotprice:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.strikeprice:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.time:HBM[2] --connectivity.sp $(KERNEL_NAME)_2.optionPrice:HBM[2] --connectivity.sp $(KERNEL_NAME)_1.optionType:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.spotprice:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.strikeprice:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.time:HBM[1] --connectivity.sp $(KERNEL_NAME)_1.optionPrice:HBM[1] --report_level estimate --profile.data all:all:all --profile.stall all:all --profile.exec all:all --kernel_frequency 300  --hls.clock 300000000:$(KERNEL_NAME) --save-temps
+
+VPP_FLAGS += -t $(TARGET) --platform $(DEVICE) --connectivity.nk $(KERNEL_NAME):4 \
+--connectivity.sp $(KERNEL_NAME)_1.optionType:DDR[0] \
+--connectivity.sp $(KERNEL_NAME)_1.spotprice:DDR[0] \
+--connectivity.sp $(KERNEL_NAME)_1.strikeprice:DDR[0] \
+--connectivity.sp $(KERNEL_NAME)_1.time:DDR[0] \
+--connectivity.sp $(KERNEL_NAME)_1.optionPrice:DDR[0] \
+--connectivity.sp $(KERNEL_NAME)_2.optionType:DDR[1] \
+--connectivity.sp $(KERNEL_NAME)_2.spotprice:DDR[1] \
+--connectivity.sp $(KERNEL_NAME)_2.strikeprice:DDR[1] \
+--connectivity.sp $(KERNEL_NAME)_2.time:DDR[1] \
+--connectivity.sp $(KERNEL_NAME)_2.optionPrice:DDR[1] \
+--connectivity.sp $(KERNEL_NAME)_3.optionType:DDR[2] \
+--connectivity.sp $(KERNEL_NAME)_3.spotprice:DDR[2] \
+--connectivity.sp $(KERNEL_NAME)_3.strikeprice:DDR[2] \
+--connectivity.sp $(KERNEL_NAME)_3.time:DDR[2] \
+--connectivity.sp $(KERNEL_NAME)_3.optionPrice:DDR[2] \
+--connectivity.sp $(KERNEL_NAME)_4.optionType:DDR[3] \
+--connectivity.sp $(KERNEL_NAME)_4.spotprice:DDR[3] \
+--connectivity.sp $(KERNEL_NAME)_4.strikeprice:DDR[3] \
+--connectivity.sp $(KERNEL_NAME)_4.time:DDR[3] \
+--connectivity.sp $(KERNEL_NAME)_4.optionPrice:DDR[3] \
+--report_level estimate --profile.data all:all:all --profile.stall all:all --profile.exec all:all \
+--kernel_frequency 300 --hls.clock 300000000:$(KERNEL_NAME) --save-temps
+
 # VPP_FLAGS += -t $(TARGET) --platform $(DEVICE)
 ifneq ($(TARGET), hw)
 	VPP_FLAGS += -g

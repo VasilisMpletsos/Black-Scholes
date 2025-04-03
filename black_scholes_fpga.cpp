@@ -14,7 +14,8 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
-typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
+// typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 #define SIZE 858

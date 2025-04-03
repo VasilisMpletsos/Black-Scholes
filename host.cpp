@@ -2,15 +2,14 @@
 
 #include "utility.hpp"
 
-// typedef ap_fixed <23,13,AP_RND_CONV > FPGA_FIXED_POINT;
-typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed <23,13,AP_RND_CONV > FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 // number of runs
-#define RUNS 1
+#define RUNS 10
 
 // number of compute units on FPGA
-#define CU 1 // at least 2 (1 for put and 1 for call)
+#define CU 4 // at least 2 (1 for put and 1 for call)
 #define QoS 0.5 // quality threshold
 
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
