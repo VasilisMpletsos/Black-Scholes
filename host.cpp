@@ -48,6 +48,7 @@ int main(int argc, char ** argv) {
   std::ifstream tteFile("./datasets/tte.txt");
   std::ifstream typeFile("./datasets/type.txt");
   std::string binaryFile("./build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
+  // std::string binaryFile("./build_dir.hw.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
 
   // Check if files opened successfully
     if (!closeFile || !strikeFile || !tteFile || !typeFile) {
@@ -101,6 +102,7 @@ int main(int argc, char ** argv) {
   // Step 2: Initialize the OpenCL environment
   // -----------------------------------------------------------------------------------
 
+  
   cl_int err;
   cl::CommandQueue q;
   cl::Context context;
@@ -113,6 +115,8 @@ int main(int argc, char ** argv) {
       fileBuf.data(), fileBuf.size()
     }
   };
+
+  printf("REACHED HERE...\n");
 
   bool valid_device = false;
   std::string krnl_name = "kernelBlackScholes";
