@@ -92,7 +92,11 @@ Effective memory bandwidth: 10.220369 GB/s
 Gigaoptions per second: 0.511018 
 
 ```
-GPU IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
+GPU IS <u>**~ x80 times faster**</u> than the best implementation so far on CPU from C++
+and **x47833** from Python
+****
+```
+FPGA IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
 and **x47833** from Python
 ****
 ### In order to run VITIS
