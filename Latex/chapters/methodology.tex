@@ -1,0 +1,150 @@
+\chapter{Μεθοδολογία}
+\section{Εισαγωγή}
+Ο στόχος της παρούσας εργασίας ήταν ο προγραμματισμός του αλγορίθμου Black-Scholes και η εκτέλεσή του σε τρεις διαφορετικές αρχιτεκτονικές:
+
+\begin{itemize}
+    \item \textbf{CPU}: Εδώ οι δοκιμές έγιναν σε ένα σύστημα με επεξεργαστή AMD Ryzen 7 5700G.
+    Πραγματοποιήθηκε η βασική εκτέλεση του αλγορίθμου τόσο μεμονωμένα με signle thread χρησιμοποιώντας C/C++.
+    Επίσης για λόγους πληρότητας έγινε και η αντίστοιχη υλοποίηση στην πλέον διαδεδομένη γλώσσα προγραμματισμού Python,
+    οπου και δοκιμάστηκαν τόσο η σειριακή όσο και η παράλληλη εκτέλεση με χρήση της βιβλιοθήκης multiprocessing.
+    \item \textbf{GPU}: Για την υλοποίηση σε GPU χρησιμοποιήθηκε η γλώσσα προγραμματισμού CUDA της NVIDIA και οι δοκιμές έγιναν σε διάφορες GPU τις οποίες θα δούμε και στο
+    αντίστοιχο κεφάλαιο.
+    \item \textbf{FPGA}: Τέλος έγινε και η αντίστοιχη υλοποίηση και εκτέλεση σε FPGA μέσω του εργαλείου Vitis της Xilinx.
+    Η εκτέλεση στο FPGA αποτελεί το βασικό κομμάτι της παρούσας εργασίας. Η κάρτα επιτάχυνσης που χρησιμοποιήθηκε είναι η Xilinx Alveo U200.
+\end{itemize}
+Μέσω αυτής της διαδικασίας, επιδιώκεται η συγκριτική αξιολόγηση της απόδοσης κάθε πλατφόρμας ως προς την υλοποίηση και εκτέλεση του συγκεκριμένου αλγορίθμου.
+
+\section{Εκτέλεση σε CPU}
+Οπως προαναφέρθηκε, η εκτέλεση σε CPU φιακτρίνεται σε δύο βασικά μέρη. Στην βασική υλοποίηση σε C/C++ και στην δευτερεύουσα υλοποίηση σε Python.
+Η υλοποίηση στην γλώσσα C++ γίνεται ουύτουσιαλως καθώς είναι η βασική γλώσσα προγραμματισμού που θα χρειαστεί επίσης και κατά την εκτέλεση στο αρχείο του host
+για την εκτέλεση σε FPGA. Η υλοποίηση στην Python έγινε για λόγους πληρότητας και σύγκρισης με την C/C++ υλοποίηση ωστε να φανεί πόσο πιο αποδοτική
+είναι η υλοποίηση σε C/C++ σε σχέση με την Python.
+
+\subsection{Υλοποίηση σε C/C++}
+
+Η υλοποίηση του αλγορίθμου ξεκινάει στο αρχείο \href{https://github.com/VasilisMpletsos/Black-Scholes/tree/main}{\textbf{main.cpp}}.
+
+\begin{lstlisting}[language=C++, caption={main.cpp}]
+// number of runs
+#define DATA_SIZE 858
+#define PULL_OPTION 0
+#define CALL_OPTION 1
+#define RUNS 1000
+
+// Define Option Constants for test
+// 1.575% risk free rate, logical values from 1% to 3% but depends on the country
+#define RISK_FREE_RATE  0.01575
+// logical values from 10% to 30% but depends on the stock
+#define VOLATILITY 0.25
+
+// Import various libraries
+#include "string.h"
+#include <cmath>
+#include "stdio.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <sstream>
+#include <unistd.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <chrono>
+
+// Include black scholes implementation
+#include "black_scholes.hpp"
+
+///////////////////////////////////////////////////////////////////////////////
+// Notes:
+// This is the simplest file that excecutes the black scholes algorithm on the CPU
+///////////////////////////////////////////////////////////////////////////////
+
+// With Arguments
+    int main(int argc, char **argv) {
+        
+        // Read close prices
+        float closePrices[DATA_SIZE], strikePrices[DATA_SIZE], tte[DATA_SIZE];
+        int callTypes[DATA_SIZE];W
+
+        printf("Reading data...\n");
+        // Reading data from files
+        std::cout << "Reading data...\n";
+        std::ifstream closeFile("./datasets/option_price.txt");
+        std::ifstream strikeFile("./datasets/strike.txt");
+        std::ifstream tteFile("./datasets/tte.txt");
+        std::ifstream typeFile("./datasets/type.txt");
+        std::ifstream binaryFile("./datasets/type.txt");
+
+        // Check if files opened successfully
+        if (!closeFile || !strikeFile || !tteFile || !typeFile) {
+            throw std::runtime_error("Failed to open one or more input files.");
+        }
+
+        // Load data into host arrays
+        for (int i = 0; i < DATA_SIZE; i++) {
+            std::string line;
+
+            std::getline(closeFile, line);
+            closePrices[i] = std::stof(line);
+
+            std::getline(strikeFile, line);
+            strikePrices[i] = std::stof(line);
+
+            std::getline(tteFile, line);
+            tte[i] = std::stof(line);
+
+            std::getline(typeFile, line);
+            callTypes[i] = std::stoi(line);  // Assuming type is an integer
+        }
+
+        // =================== CPU Execution ===================
+
+        // Calculate the predicted option prices
+        float optionPrices[DATA_SIZE];
+        chrono::high_resolution_clock::time_point t1, t2;
+        t1 = chrono::high_resolution_clock::now();
+        for (int r = 0; r < RUNS; r++) {
+            for (int i = 0; i < DATA_SIZE; i++) {
+                float a, b;
+                Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &optionPrices[i]);
+            }
+        }
+    
+        t2 = chrono::high_resolution_clock::now();
+        chrono::duration <double, std::milli> CPU_time = t2 - t1;
+        printf("CPU Time: %f ms\n", CPU_time.count()*1000);
+        // PRINT AVG TIME
+        printf("Average CPU Time: %f ms\n", (CPU_time.count()/DATA_SIZE)*1000);
+
+        // // Iterate through results and print
+        // for (int i = 0; i < DATA_SIZE; i++) {
+        //     printf("Option %d: %.5f\n", i+1, optionPrices[i]);
+        // }
+
+    }
+\end{lstlisting}*
+
+Το αρχείο κώδικα main.cpp οπως βλέπουμε λοιπόν διαχειρίζεται την εκτέλεση του αλγορίθμου Black-Scholes σε CPU ακολουθώντας τα παρακάτω βήματα:
+]\begin{itemize}
+    \item Ορίζει σταθερές όπως ο αριθμός των δεδομένων (DATA\_SIZE), ο τύπος των options (CALL\_OPTION, PULL\_OPTION), ο αριθμός των επαναλήψεων (RUNS),
+    το επιτόκιο χωρίς κίνδυνο (RISK\_FREE\_RATE) και η μεταβλητότητα (VOLATILITY).
+    \item Εισάγει τις απαραίτητες βιβλιοθήκες για την εκτέλεση του προγράμματος.
+    \item Διαβάζει δεδομένα από αρχεία κειμένου που περιέχουν τις τιμές κλεισίματος, τις τιμές εξάσκησης, τον χρόνο μέχρι τη λήξη και τον τύπο του option.
+    \item Αποθηκεύει τα δεδομένα σε πίνακες μεταβλητών.
+    \item Εκτελεί επαναληπτικά τον αλγόριθμο Black-Scholes για κάθε option και για προκαθορισμένο αριθμό επαναλήψεων, μετρώντας τον χρόνο εκτέλεσης.
+    \item Εμφανίζει τον συνολικό και τον μέσο χρόνο εκτέλεσης για την επεξεργασία όλων των δεδομένων στην CPU.
+]\end{itemize}
+
+\subsection{Υλοποίηση σε Python}
+
+\subsection{Σειριακή και Παράλληλη Εκτέλεση}
+
+\section{Εκτέλεση σε GPU}
+
+
+\section{Εκτέλεση σε FPGA}
+\section{Συγκριτική ανάλυση}
+\section{Συμπεράσματα}
