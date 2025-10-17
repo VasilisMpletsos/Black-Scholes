@@ -4,7 +4,7 @@
 #include <helper_cuda.h>  
 #include "BlackScholes_kernel.cuh"
 
-const int REPEAT_ITERATIONS_EXPERIMENT = 1000;
+const int REPEAT_ITERATIONS_EXPERIMENT = 10000;
 
 
 const int MEMORY_SIZE_ALLOCATION_FLOAT = DATA_SIZE * sizeof(float);
@@ -40,7 +40,6 @@ int main(int argc, char **argv)
     checkCudaErrors(cudaGetDeviceProperties(&deviceProp, device));
     printf("GPU max threads per block %d \n", deviceProp.maxThreadsPerBlock);
 
-    int MAX_THREADS_PER_BLOCK = deviceProp.maxThreadsPerBlock;
     int numSMs = deviceProp.multiProcessorCount;
     int maxThreadsPerSM = deviceProp.maxThreadsPerMultiProcessor;
     int blockSize = deviceProp.maxThreadsPerBlock;
@@ -152,7 +151,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < REPEAT_ITERATIONS_EXPERIMENT; i++)
     {
-        BlackScholesGPU<<<numBlocks, blockSize>>>(
+        BlackScholesGPU<<<numBlocks,blockSize>>>(
             (int1 *)d_OptionTypes,
             (float1 *)d_StockPrice,
             (float1 *)d_OptionStrike,
@@ -166,10 +165,16 @@ int main(int argc, char **argv)
 
     checkCudaErrors(cudaDeviceSynchronize());
     sdkStopTimer(&hTimer);
-    gpuTime = sdkGetTimerValue(&hTimer) / REPEAT_ITERATIONS_EXPERIMENT;
+    // Note: The time is in milliseconds
+    gpuTime = sdkGetTimerValue(&hTimer);
 
     //Both call and put is calculated
-    printf("Black Scholes GPU() average execution time: %f msec\n", gpuTime * 1000);
+    // Printing total time in seconds *1000
+    printf("Total Time for Black Scholes GPU: %f sec\n", gpuTime/1000);
+    // Get total calculations including replications
+    double totalCalculations = (double)totalOptions * REPEAT_ITERATIONS_EXPERIMENT;
+    printf("Total Calculations: %zu options\n", totalOptions*REPEAT_ITERATIONS_EXPERIMENT);
+    printf("Black Scholes GPU() average execution time per option: %f nano sec\n", (gpuTime*1000000) / totalCalculations);
     printf("Effective memory bandwidth: %f GB/s\n", ((double)(5 * totalOptions * sizeof(float)) * 1E-9) / (gpuTime * 1E-3));
     printf("Gigaoptions per second: %f \n\n", ((double)(totalOptions) * 1E-9) / (gpuTime * 1E-3));
 

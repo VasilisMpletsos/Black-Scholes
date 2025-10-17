@@ -302,8 +302,8 @@ int main(int argc, char ** argv) {
   cout << "Average FPGA execution time " << average_fpga_time * 1000 << " ms " << endl;
   cout << "Average CPU execution time " << average_cpu_time * 1000 << " ms" << endl;
   cout << "Speedup " << CPU_time.count() / FPGA_time.count() << endl;
-  cout << "FPGA options per second: " << (int)SIZE/(average_fpga_time) << endl;
-  cout << "CPU options per second: " << (int)SIZE/(average_cpu_time) << endl;
+  cout << "FPGA options per second: " << ((int)SIZE*RUNS)/(average_fpga_time) << endl;
+  cout << "CPU options per second: " << ((int)SIZE*RUNS)/(average_cpu_time) << endl;
 
   cout << "--------------------" << endl;
 
