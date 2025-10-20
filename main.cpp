@@ -88,9 +88,9 @@ int main(int argc, char **argv) {
  
     t2 = chrono::high_resolution_clock::now();
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
-    printf("CPU Time: %f ms\n", CPU_time.count()*1000);
+    printf("CPU Time: %f μs\n", CPU_time.count()*1000);
     // PRINT AVG TIME
-    printf("Average CPU Time: %f ms\n", (CPU_time.count()/DATA_SIZE)*1000);
+    printf("Average CPU Time: %f μs\n", (CPU_time.count()/DATA_SIZE)*1000);
 
     // // Iterate through results and print
     // for (int i = 0; i < DATA_SIZE; i++) {
