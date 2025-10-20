@@ -125,7 +125,13 @@ For Server
 ```
 
 source /opt/xilinx/xrt/setup.sh
-source /tools/Xilinx/Vitis/2023.1/settings64.sh
+
+<!-- source /tools/Xilinx/Vitis/2023.1/settings64.sh -->
+
+source /mnt/data2/Vivado2022.2.sh
+
+<!-- source /tools/Xilinx/Vitis/2019.2/settings64.sh -->
+
 export XCL_EMULATION_MODE=sw_emu
 
 ```

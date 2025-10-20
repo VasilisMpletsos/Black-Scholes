@@ -6,7 +6,7 @@ typedef ap_fixed <23,13,AP_RND_CONV > FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 // number of runs
-#define RUNS 10
+#define RUNS 10000
 
 // number of compute units on FPGA
 #define CU 4 // at least 2 (1 for put and 1 for call)
@@ -47,7 +47,7 @@ int main(int argc, char ** argv) {
   std::ifstream strikeFile("./datasets/strike.txt");
   std::ifstream tteFile("./datasets/tte.txt");
   std::ifstream typeFile("./datasets/type.txt");
-  std::string binaryFile("./build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
+  std::string binaryFile("./build_dir.hw.xilinx_u200_gen3x16_xdma_2_202110_1//kernelBlackScholes.xclbin");
   // std::string binaryFile("./build_dir.hw.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
 
   // Check if files opened successfully
@@ -245,7 +245,8 @@ int main(int argc, char ** argv) {
   }
   OCL_CHECK(err, err = q.finish());
 
-  chrono::duration < double > FPGA_time = (t2 - t1) / CU;
+  chrono::duration <double, std::milli> FPGA_time = (t2 - t1) / CU;
+  printf("FPGA Time: %f ms\n", FPGA_time.count());
 
   // --------------- CPU Execution ---------------
 
@@ -294,16 +295,20 @@ int main(int argc, char ** argv) {
   cout << "Mean Diff = " << mean_diff << endl;
   cout << "--------------------" << endl;
 
-
-  double average_cpu_time = CPU_time.count()/RUNS;
-  double average_fpga_time = FPGA_time.count()/RUNS;
-  cout << "Overall FPGA execution time " << FPGA_time.count() * 1000 << " ms " << endl;
-  cout << "Overall CPU execution time " << CPU_time.count() * 1000 << " ms" << endl;
-  cout << "Average FPGA execution time " << average_fpga_time * 1000 << " ms " << endl;
-  cout << "Average CPU execution time " << average_cpu_time * 1000 << " ms" << endl;
-  cout << "Speedup " << CPU_time.count() / FPGA_time.count() << endl;
-  cout << "FPGA options per second: " << ((int)SIZE*RUNS)/(average_fpga_time) << endl;
-  cout << "CPU options per second: " << ((int)SIZE*RUNS)/(average_cpu_time) << endl;
+  // *1_000_000 to convert to nanoseconds
+  double total_cpu_time = CPU_time.count() * 1000000;
+  double total_fpga_time = FPGA_time.count() * 1000000;
+  double average_cpu_time = total_cpu_time/RUNS;
+  double average_fpga_time = total_fpga_time/RUNS;
+  cout << "Total FPGA execution time " << total_fpga_time << " ns " << endl;
+  cout << "Total CPU execution time " << total_cpu_time << " ns" << endl;
+  cout << "Average FPGA execution time per batch " << average_fpga_time << " ns " << endl;
+  cout << "Average CPU execution time per batch" << average_cpu_time  << " ns" << endl;
+  cout << "Speedup " << total_cpu_time / total_fpga_time << endl;
+  cout << "FPGA batch SIZE options per ns: " << ((int)SIZE)/(average_fpga_time) << endl;
+  cout << "CPU batch SIZE options per ns: " << ((int)SIZE)/(average_cpu_time) << endl;
+  cout << "FPGA computation time (ns) per option: " << (average_fpga_time)/((int)SIZE)<< endl;
+  cout << "CPU computation time (ns) per option: " << (average_cpu_time)/((int)SIZE)<< endl;
 
   cout << "--------------------" << endl;
 
