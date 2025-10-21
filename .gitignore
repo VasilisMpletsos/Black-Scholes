@@ -18,3 +18,5 @@ host.cpp
 /BlackScholes
 build_dir*
 .vscode/
+/.run
+*.jou

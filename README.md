@@ -109,21 +109,22 @@ and **x47833** from Python
 ```
 FPGA IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
 and **x47833** from Python
-****
+```
+
 ### In order to run VITIS
 
 Add the required sources
-```
 
+```
 source /opt/xilinx/xrt/setup.sh
 source /tools/Xilinx/Vitis/2022.1/settings64.sh
 export CPATH="/usr/include/x86_64-linux-gnu/"
 export XCL_EMULATION_MODE=sw_emu
-
 ```
+
 For Server
-```
 
+```
 source /opt/xilinx/xrt/setup.sh
 
 <!-- source /tools/Xilinx/Vitis/2023.1/settings64.sh -->
@@ -137,6 +138,7 @@ export XCL_EMULATION_MODE=sw_emu
 ```
 
 And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx
+
 ```
 
 export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
@@ -144,6 +146,7 @@ export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
 ```
 
 Makefile
+
 ```
 
 make all TARGET=sw_emu
@@ -151,13 +154,16 @@ make all TARGET=sw_emu
 ```
 
 Copy build
+
 ```
 
 cp build_dir.sw_emu.xilinx_u200_gen3x16_xdma_2_202110_1/mmul.xclbin ./
 export XCL_EMULATION_MODE=sw_emu
 
 ```
+
 Start Vitis:
+
 ```
 
 vitis_hls
@@ -165,12 +171,15 @@ vitis_hls
 ```
 
 In order to connect to server you have to:
+
 ```
 
 ssh -i ~/.ssh/id_rsa_server guest@skylla.physics.auth.gr
 
 ```
+
 Copy files to the server:
+
 ```
 
 scp -r ./Server/ guest@skylla.physics.auth.gr:/home/guest/BlackScholes
@@ -178,20 +187,26 @@ scp -r ./Server/ guest@skylla.physics.auth.gr:/home/guest/BlackScholes
 ```
 
 In order to run the Simulation in Vitis:
-* 10ns for 100MHz sim although u200 can achieve max 300MHz
-* Select Alveo u200 from boards
+
+- 10ns for 100MHz sim although u200 can achieve max 300MHz
+- Select Alveo u200 from boards
 
 The estimated simulation from Vitis regarding execution time is:
 **7.3ns** so **7 times slower** than the GPU.
 
 ![App Screenshot](./assets/vitis.png)
 
-****
+---
+
 ### Usefull Links
-* [Black Scholes Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
-* [Tim Worrall Notes for Black Scholes](http://www.timworrall.com/fin-40008/bscholes.pdf)
-* [Black Scholes Cuda by Nvidia](https://github.com/tpn/cuda-samples/tree/master/v9.0/4_Finance/BlackScholes)
-* [Cuda Commands](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE)
-* [FPGA Platform Documentation](https://docs.amd.com/r/en-US/ug1120-alveo-platforms/U200-Gen3x16-XDMA-base_2-Platform)
-``
+
+- [Black Scholes Wikipedia](https://en.wikipedia.org/wiki/Black%E2%80%93Scholes_model)
+- [Tim Worrall Notes for Black Scholes](http://www.timworrall.com/fin-40008/bscholes.pdf)
+- [Black Scholes Cuda by Nvidia](https://github.com/tpn/cuda-samples/tree/master/v9.0/4_Finance/BlackScholes)
+- [Cuda Commands](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE)
+- [FPGA Platform Documentation](https://docs.amd.com/r/en-US/ug1120-alveo-platforms/U200-Gen3x16-XDMA-base_2-Platform)
+  ``
+
+```
+
 ```
