@@ -18,8 +18,8 @@
 typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
-#define SIZE 858
-#define N 24
+#define SIZE 85800
+#define N 12
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
 #define VOLATILITY 0.25
@@ -44,7 +44,8 @@ inline FPGA_FIXED_POINT exp_taylor_aprox(FPGA_FIXED_POINT x) {
     FPGA_FIXED_POINT sum = 1.0;
     FPGA_FIXED_POINT term = 1.0;
     
-    for (int i = 1; i <= N; ++i) {
+    TAYLOR_LOOP:for (int i = 1; i <= N; ++i) {
+        #pragma HLS UNROLL
         term = term * x / (FPGA_FIXED_POINT)i;
         sum = sum + term;
     }
@@ -104,6 +105,7 @@ inline void calculate_prob_factors_d1_d2_fpga(
 
 
 inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
+    #pragma HLS INLINE
     // Approximation of the CDF based on Abramowitz and Stegun
     FPGA_FIXED_POINT abs_input = (FPGA_FIXED_POINT)std::fabs((float)input);
     FPGA_FIXED_POINT kappa = (FPGA_FIXED_POINT)1.0 / ((FPGA_FIXED_POINT)1.0 + (FPGA_FIXED_POINT)gamma * abs_input);
@@ -113,6 +115,7 @@ inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
 
 // Also need to update the fast_cdf_approximation to use high precision
 inline FPGA_FIXED_POINT fast_cdf_approximation_fpga(FPGA_FIXED_POINT input) {
+    #pragma HLS INLINE
     FPGA_FIXED_POINT inputSquared = input * input;
     FPGA_FIXED_POINT val = (FPGA_FIXED_POINT)(-0.5) * inputSquared;
     FPGA_FIXED_POINT expVal = exp_taylor_aprox(val);
@@ -200,8 +203,7 @@ void compute(
 
 void write(hls::stream<FPGA_FIXED_POINT> &optionStream, FPGA_FIXED_POINT optionPrice[SIZE])
 {
-	LOOP_WRITE:
-    for(int i=0; i < SIZE; i++){
+	LOOP_WRITE:for(int i=0; i < SIZE; i++){
         #pragma HLS PIPELINE II=1
         optionPrice[i] = optionStream.read();
 	}
@@ -223,11 +225,11 @@ extern "C" {
         static hls::stream<FPGA_FIXED_POINT> optionStream("write");
 
         // Add pragmas to the streams
-        #pragma HLS STREAM variable=optionTypeStream depth=2
-        #pragma HLS STREAM variable=spotpriceStream depth=2
-        #pragma HLS STREAM variable=strikepriceStream depth=2
-        #pragma HLS STREAM variable=timeStream depth=2
-        #pragma HLS STREAM variable=optionStream depth=2
+        #pragma HLS STREAM variable=optionTypeStream depth=32
+        #pragma HLS STREAM variable=spotpriceStream depth=32
+        #pragma HLS STREAM variable=strikepriceStream depth=32
+        #pragma HLS STREAM variable=timeStream depth=32
+        #pragma HLS STREAM variable=optionStream depth=32
 
         #pragma HLS DATAFLOW
         read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionType,spotprice,strikeprice,time);

@@ -15,11 +15,11 @@
 #include <cstring>
 #include <algorithm>
 
-typedef ap_fixed<23,13,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed<23,13> FPGA_FIXED_POINT;
 typedef ap_uint<1> OPTION_TYPE_BOOL;
 
 #define SIZE 858
-#define N 12          
+#define N_TAYLOR 12
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
 #define VOLATILITY 0.25
@@ -37,7 +37,10 @@ typedef ap_uint<1> OPTION_TYPE_BOOL;
 // Small helper: abs for ap_fixed (avoid std::fabs overhead)
 inline FPGA_FIXED_POINT fp_abs(FPGA_FIXED_POINT x) {
 #pragma HLS INLINE
-    return (x < 0) ? -x : x;
+	if (x>0){
+		return -x;
+	};
+	return x;
 }
 
 // Taylor-series exp approximation: reduces latency and resources.
@@ -104,8 +107,8 @@ inline void calculate_prob_factors_d1_d2_fpga(
     // Cast to float for the standard math helpers (cheap for prototyping,
     // but synthesizes to float IP on FPGA)
     float ratio_f = (float)ratio;
-    float logVal_f = logf(ratio_f);
-    float sqrtVal_f = sqrtf((float)tte);
+    float logVal_f = log(ratio_f);
+    float sqrtVal_f = sqrt((float)tte);
     FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT)logVal_f;
     FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT)sqrtVal_f;
 
