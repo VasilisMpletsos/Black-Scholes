@@ -23,12 +23,12 @@ For CPU comping with gnu compiler g++ and run
 
 ```
 g++ main.cpp -o black_scholes.o
-./black_scholes_cpu.o
+black_scholes.o
 ```
 
 ```
 g++ host.cpp -o host.o
-./black_scholes_cpu.o
+host.o
 ```
 
 ---
@@ -53,40 +53,40 @@ To create them all run "make" to start makefile.
 
 Times are reported in **ms**.
 
-| Run         | Python      | C++          |
-| ----------- | ----------- | ------------ |
-| 1           | 83.78       | 0.215180     |
-| 2           | 86.064      | 0.212246     |
-| 3           | 82.999      | 0.177605     |
-| 4           | 81.916      | 0.217485     |
-| 5           | 81.56       | 0.068165     |
-| 6           | 81.144      | 0.177815     |
-| 7           | 81.904      | 0.210710     |
-| 8           | 82.483      | 0.085695     |
-| 9           | 94.895      | 0.095403     |
-| 10          | 86.902      | 0.131441     |
-| **Average** | **84.3647** | **0.135917** |
+| Run         | Python       | C++          |
+| ----------- | ------------ | ------------ |
+| 1           | 0.109119     | 0.000544     |
+| 2           | 0.108878     | 0.000550     |
+| 3           | 0.106630     | 0.000544     |
+| 4           | 0.109391     | 0.000545     |
+| 5           | 0.107120     | 0.000544     |
+| 6           | 0.109008     | 0.000545     |
+| 7           | 0.106312     | 0.000546     |
+| 8           | 0.108675     | 0.000546     |
+| 9           | 0.108699     | 0.000548     |
+| 10          | 0.108302     | 0.000548     |
+| **Average** | **0,108213** | **0,000546** |
 
-The **Python** implementation is is **x620 times more slow** than **C++**!
+The **Python** implementation is is **198 times more slow** than **C++**!
 
 ---
 
 Now the following comparison is between **fast_cdf_approximation** and **normal_cdf** functions:
 | Run | Fast Approximation| Normal CDF |
-|-------------|-------------------|-------------|
-| 1 | 0.070818 | 0.215529 |
-| 2 | 0.086184 | 0.075847 |
-| 3 | 0.128787 | 0.184100 |
-| 4 | 0.127878 | 0.072495 |
-| 5 | 0.231174 | 0.187733 |
-| 6 | 0.070958 | 0.094425 |
-| 7 | 0.068235 | 0.132488 |
-| 8 | 0.136400 | 0.096380 |
-| 9 | 0.069562 | 0.101339 |
-| 10 | 0.070050 | 0.135142 |
-| **Average** | **0.1060046** | **0.129548**|
+|-------------|-----------|------------|
+| 1 | 0.000544 | 0.000617 |
+| 2 | 0.000550| 0.000619 |
+| 3 | 0.000544| 0.000616 |
+| 4 | 0.000545| 0.000615 |
+| 5 | 0.000544| 0.000615 |
+| 6 | 0.000545| 0.000622 |
+| 7 | 0.000546| 0.000618 |
+| 8 | 0.000546| 0.000622 |
+| 9 | 0.000548| 0.000615 |
+| 10 | 0.000548 | 0.000615 |
+| **Average** | **0,000546** | **0,000617**|
 
-The fast approximation seems to be **x1.22 times faster**
+The fast approximation seems to be **x1.13 times faster**
 It would be even more helpfull due the the embedding nature of FPGA
 
 ---
@@ -150,6 +150,7 @@ Makefile
 ```
 
 make all TARGET=sw_emu
+make all TARGET=hw
 
 ```
 

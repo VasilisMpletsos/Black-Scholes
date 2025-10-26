@@ -1,8 +1,6 @@
 // number of runs
 #define DATA_SIZE 858
-#define PULL_OPTION 0
-#define CALL_OPTION 1
-#define RUNS 1000
+#define RUNS 10000
 
 // Define Option Constants for test
 // 1.575% risk free rate, logical values from 1% to 3% but depends on the country
@@ -75,6 +73,8 @@ int main(int argc, char **argv) {
 
     // =================== CPU Execution ===================
 
+    // volatile float dummy_sum = 0.0f;
+
     // Calculate the predicted option prices
     float optionPrices[DATA_SIZE];
     chrono::high_resolution_clock::time_point t1, t2;
@@ -83,14 +83,19 @@ int main(int argc, char **argv) {
         for (int i = 0; i < DATA_SIZE; i++) {
             float a, b;
             Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &optionPrices[i]);
+            // dummy_sum += optionPrices[i];
         }
     }
- 
     t2 = chrono::high_resolution_clock::now();
     chrono::duration <double, std::milli> CPU_time = t2 - t1;
-    printf("CPU Time: %f μs\n", CPU_time.count()*1000);
+    printf("Total options calculations done: %d\n", DATA_SIZE*RUNS);
+    printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
+    printf("In seconds: %f \n", CPU_time.count()/1000);
     // PRINT AVG TIME
-    printf("Average CPU Time: %f μs\n", (CPU_time.count()/DATA_SIZE)*1000);
+    printf("Average CPU Time per option: %f millis seconds\n", (CPU_time.count()/(DATA_SIZE*RUNS)));
+
+    // Print the dummy sum to ensure it's not optimized away
+    // printf("Checksum (ignore): %f\n", dummy_sum);
 
     // // Iterate through results and print
     // for (int i = 0; i < DATA_SIZE; i++) {
