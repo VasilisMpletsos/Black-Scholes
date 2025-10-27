@@ -33,6 +33,7 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 #include <cstring>
 #include <algorithm>
 #include <chrono>
+#include <thread>
 
 // Include black scholes implementation
 #include "black_scholes.hpp"
@@ -275,6 +276,35 @@ int main(int argc, char ** argv) {
   t2 = chrono::high_resolution_clock::now();
   chrono::duration <double, std::milli> CPU_time = t2 - t1;
   printf("CPU Time: %f ms\n", CPU_time.count());
+
+  // Additionally run a 16-threaded CPU benchmark (fills a separate buffer)
+  {
+    float cpu_option_prices_mt[SIZE];
+    const int NUM_THREADS = 16;
+    int base_chunk = SIZE / NUM_THREADS;
+
+    t1 = chrono::high_resolution_clock::now();
+    std::vector<std::thread> threads;
+    threads.reserve(NUM_THREADS);
+
+    for (int t = 0; t < NUM_THREADS; ++t) {
+      int start = t * base_chunk;
+      int end = (t == NUM_THREADS - 1) ? SIZE : start + base_chunk;
+      threads.emplace_back([start, end, &cpu_option_prices_mt, &callTypes, &closePrices, &strikePrices, &tte]() {
+        for (int run = 0; run < RUNS; ++run) {
+          for (int i = start; i < end; ++i) {
+            Black_Scholes_CPU(callTypes[i], closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &cpu_option_prices_mt[i]);
+          }
+        }
+      });
+    }
+
+    for (auto &th : threads) th.join();
+
+    t2 = chrono::high_resolution_clock::now();
+    chrono::duration <double, std::milli> CPU_time_mt = t2 - t1;
+    printf("CPU Time (16-thread): %f ms\n", CPU_time_mt.count());
+  }
 
   // --------------- Compare Results ---------------
 

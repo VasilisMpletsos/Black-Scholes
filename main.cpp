@@ -16,7 +16,6 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
-#include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
@@ -24,6 +23,15 @@
 #include <cstring>
 #include <algorithm>
 #include <chrono>
+
+// Use Windows threads for MinGW
+#ifdef _WIN32
+    #include <windows.h>
+    #include <process.h>
+#else
+    #include <thread>
+    #include <unistd.h>
+#endif
 
 // Include black scholes implementation
 #include "black_scholes.hpp"
@@ -77,8 +85,8 @@ int main(int argc, char **argv) {
 
     // Calculate the predicted option prices
     float optionPrices[DATA_SIZE];
-    chrono::high_resolution_clock::time_point t1, t2;
-    t1 = chrono::high_resolution_clock::now();
+    std::chrono::high_resolution_clock::time_point t1, t2;
+    t1 = std::chrono::high_resolution_clock::now();
     for (int r = 0; r < RUNS; r++) {
         for (int i = 0; i < DATA_SIZE; i++) {
             float a, b;
@@ -86,13 +94,103 @@ int main(int argc, char **argv) {
             // dummy_sum += optionPrices[i];
         }
     }
-    t2 = chrono::high_resolution_clock::now();
-    chrono::duration <double, std::milli> CPU_time = t2 - t1;
+    t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration <double, std::milli> CPU_time = t2 - t1;
     printf("Total options calculations done: %d\n", DATA_SIZE*RUNS);
     printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
     printf("In seconds: %f \n", CPU_time.count()/1000);
     // PRINT AVG TIME
     printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(DATA_SIZE*RUNS)));
+
+    // Additionally run a 16-thread CPU benchmark (separate buffer)
+    #ifdef _WIN32
+    // Windows threading implementation
+    {
+        struct ThreadData {
+            int start;
+            int end;
+            float* optionPrices_mt;
+            int* callTypes;
+            float* closePrices;
+            float* strikePrices;
+            float* tte;
+        };
+
+        float optionPrices_mt[DATA_SIZE];
+        const int NUM_THREADS = 16;
+        HANDLE threads[NUM_THREADS];
+        ThreadData threadData[NUM_THREADS];
+        int base_chunk = DATA_SIZE / NUM_THREADS;
+
+        // Thread function with proper calling convention
+        struct ThreadFunctor {
+            static unsigned __stdcall threadFunc(void* param) {
+                ThreadData* data = (ThreadData*)param;
+                for (int run = 0; run < RUNS; ++run) {
+                    for (int i = data->start; i < data->end; ++i) {
+                        Black_Scholes_CPU(data->callTypes[i], data->closePrices[i], 
+                                        data->strikePrices[i], RISK_FREE_RATE, 
+                                        VOLATILITY, data->tte[i], &data->optionPrices_mt[i]);
+                    }
+                }
+                return 0;
+            }
+        };
+
+        t1 = std::chrono::high_resolution_clock::now();
+
+        for (int t = 0; t < NUM_THREADS; ++t) {
+            threadData[t].start = t * base_chunk;
+            threadData[t].end = (t == NUM_THREADS - 1) ? DATA_SIZE : threadData[t].start + base_chunk;
+            threadData[t].optionPrices_mt = optionPrices_mt;
+            threadData[t].callTypes = callTypes;
+            threadData[t].closePrices = closePrices;
+            threadData[t].strikePrices = strikePrices;
+            threadData[t].tte = tte;
+            threads[t] = (HANDLE)_beginthreadex(NULL, 0, ThreadFunctor::threadFunc, &threadData[t], 0, NULL);
+        }
+
+        WaitForMultipleObjects(NUM_THREADS, threads, TRUE, INFINITE);
+        for (int t = 0; t < NUM_THREADS; ++t) {
+            CloseHandle(threads[t]);
+        }
+
+        t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration <double, std::milli> CPU_time_mt = t2 - t1;
+        printf("Total CPU Time (16-thread): %f milli seconds\n", CPU_time_mt.count());
+        printf("Average CPU Time per option (16-thread): %f milli seconds\n", (CPU_time_mt.count()/(DATA_SIZE*RUNS)));
+    }
+    #else
+    // POSIX threading implementation
+    {
+        float optionPrices_mt[DATA_SIZE];
+        const int NUM_THREADS = 16;
+        int base_chunk = DATA_SIZE / NUM_THREADS;
+
+        t1 = std::chrono::high_resolution_clock::now();
+        std::vector<std::thread> threads;
+        threads.reserve(NUM_THREADS);
+
+        for (int t = 0; t < NUM_THREADS; ++t) {
+            int start = t * base_chunk;
+            int end = (t == NUM_THREADS - 1) ? DATA_SIZE : start + base_chunk;
+            threads.emplace_back([start, end, &optionPrices_mt, &callTypes, &closePrices, &strikePrices, &tte]() {
+                for (int run = 0; run < RUNS; ++run) {
+                    for (int i = start; i < end; ++i) {
+                        Black_Scholes_CPU(callTypes[i], closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &optionPrices_mt[i]);
+                    }
+                }
+            });
+        }
+
+        for (auto &th : threads) th.join();
+
+        t2 = std::chrono::high_resolution_clock::now();
+        std::chrono::duration <double, std::milli> CPU_time_mt = t2 - t1;
+        printf("Total CPU Time (16-thread): %f milli seconds\n", CPU_time_mt.count());
+        printf("Average CPU Time per option (16-thread): %f milli seconds\n", (CPU_time_mt.count()/(DATA_SIZE*RUNS)));
+    }
+    #endif
 
     // Print the dummy sum to ensure it's not optimized away
     // printf("Checksum (ignore): %f\n", dummy_sum);

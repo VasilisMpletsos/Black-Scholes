@@ -19,10 +19,19 @@ This is a repository of the work for my final assignment in the UNI for the MSc 
 
 ## Notes
 
-For CPU comping with gnu compiler g++ and run
+For CPU compiling with gnu compiler g++ and run
+
+**Single-threaded version:**
 
 ```
 g++ main.cpp -o black_scholes.o
+black_scholes.o
+```
+
+**With 16-thread multithreading (Windows):**
+
+```
+g++ -O3 main.cpp -o black_scholes.o
 black_scholes.o
 ```
 
@@ -53,21 +62,20 @@ To create them all run "make" to start makefile.
 
 Times are reported in **ms**.
 
-| Run         | Python       | C++          |
-| ----------- | ------------ | ------------ |
-| 1           | 0,109119     | 0,000544     |
-| 2           | 0,108878     | 0,000550     |
-| 3           | 0,106630     | 0,000544     |
-| 4           | 0,109391     | 0,000545     |
-| 5           | 0,107120     | 0,000544     |
-| 6           | 0,109008     | 0,000545     |
-| 7           | 0,106312     | 0,000546     |
-| 8           | 0,108675     | 0,000546     |
-| 9           | 0,108699     | 0,000548     |
-| 10          | 0,108302     | 0,000548     |
-| **Average** | **0,108213** | **0,000546** |
+| Run | Python | C++ | C++ Multithreaded x16 |
+| 1 | 0,109119 | 0,000544 | 0,000041 |
+| 2 | 0,108878 | 0,000550 | 0,000041 |
+| 3 | 0,106630 | 0,000544 | 0,000038 |
+| 4 | 0,109391 | 0,000545 | 0,000038 |
+| 5 | 0,107120 | 0,000544 | 0,000038 |
+| 6 | 0,109008 | 0,000545 | 0,000039 |
+| 7 | 0,106312 | 0,000546 | 0,000040 |
+| 8 | 0,108675 | 0,000546 | 0,000038 |
+| 9 | 0,108699 | 0,000548 | 0,000039 |
+| 10 | 0,108302 | 0,000548 | 0,000038 |
+| **Average** | **0,108213** | **0,000546** | **0,000039** |
 
-The **Python** implementation is is **198 times more slow** than **C++**!
+The **Python** implementation is is **198 times more slow** than **C++**, and the multithreaded equivalent on 16 threads gives a speedup of ~x14!
 
 ---
 
