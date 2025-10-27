@@ -62,26 +62,27 @@ To create them all run "make" to start makefile.
 
 Times are reported in **ms**.
 
-| Run | Python | C++ | C++ Multithreaded x16 |
-| 1 | 0,109119 | 0,000544 | 0,000041 |
-| 2 | 0,108878 | 0,000550 | 0,000041 |
-| 3 | 0,106630 | 0,000544 | 0,000038 |
-| 4 | 0,109391 | 0,000545 | 0,000038 |
-| 5 | 0,107120 | 0,000544 | 0,000038 |
-| 6 | 0,109008 | 0,000545 | 0,000039 |
-| 7 | 0,106312 | 0,000546 | 0,000040 |
-| 8 | 0,108675 | 0,000546 | 0,000038 |
-| 9 | 0,108699 | 0,000548 | 0,000039 |
-| 10 | 0,108302 | 0,000548 | 0,000038 |
-| **Average** | **0,108213** | **0,000546** | **0,000039** |
+| Run         | Python       | C++          | C++ Multithreaded |
+| ----------- | ------------ | ------------ | ----------------- |
+| 1           | 0,109119     | 0,000544     | 0,000041          |
+| 2           | 0,108878     | 0,000550     | 0,000041          |
+| 3           | 0,106630     | 0,000544     | 0,000038          |
+| 4           | 0,109391     | 0,000545     | 0,000038          |
+| 5           | 0,107120     | 0,000544     | 0,000038          |
+| 6           | 0,109008     | 0,000545     | 0,000039          |
+| 7           | 0,106312     | 0,000546     | 0,000040          |
+| 8           | 0,108675     | 0,000546     | 0,000038          |
+| 9           | 0,108699     | 0,000548     | 0,000039          |
+| 10          | 0,108302     | 0,000548     | 0,000038          |
+| **Average** | **0,108213** | **0,000546** | **0,000039**      |
 
 The **Python** implementation is is **198 times more slow** than **C++**, and the multithreaded equivalent on 16 threads gives a speedup of ~x14!
 
 ---
 
 Now the following comparison is between **fast_cdf_approximation** and **normal_cdf** functions:
-| Run | Fast Approximation| Normal CDF |
-|-------------|-----------|------------|
+| Run | Fast Approximation | Normal CDF |
+|-------------|--------------------|------------|
 | 1 | 0.000544| 0,000617 |
 | 2 | 0.000550| 0,000619 |
 | 3 | 0.000544| 0,000616 |
@@ -115,8 +116,8 @@ and **x47833** from Python
 ---
 
 ```
-FPGA IS <u>**x77.15 times faster**</u> than the best implementation so far on CPU from C++
-and **x47833** from Python
+FPGA IS <u>~**x209 times faster**</u> than the best implementation so far on CPU from C++
+and **x41513** from Python
 ```
 
 ### In order to run VITIS
@@ -227,5 +228,7 @@ The estimated simulation from Vitis regarding execution time is:
   ``
 
 ```
+
+
 
 ```
