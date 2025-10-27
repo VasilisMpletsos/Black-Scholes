@@ -43,12 +43,17 @@ int main(int argc, char ** argv) {
   // Step 1: Read Data
   // -----------------------------------------------------------------------------------
 
+  cout << "REACHED HERE 1" << endl;
+
   std::ifstream closeFile("./datasets/option_price.txt");
   std::ifstream strikeFile("./datasets/strike.txt");
   std::ifstream tteFile("./datasets/tte.txt");
   std::ifstream typeFile("./datasets/type.txt");
+  cout << "REACHED HERE 2" << endl;
   std::string binaryFile("./build_dir.hw.xilinx_u200_gen3x16_xdma_2_202110_1//kernelBlackScholes.xclbin");
   // std::string binaryFile("./build_dir.hw.xilinx_u200_gen3x16_xdma_2_202110_1/kernelBlackScholes.xclbin");
+
+  cout << "REACHED HERE 3" << endl;
 
   // Check if files opened successfully
     if (!closeFile || !strikeFile || !tteFile || !typeFile) {
@@ -102,21 +107,27 @@ int main(int argc, char ** argv) {
   // Step 2: Initialize the OpenCL environment
   // -----------------------------------------------------------------------------------
 
+  cout << "REACHED HERE 4" << endl;
   
   cl_int err;
   cl::CommandQueue q;
   cl::Context context;
   std::string CU_id;
   std::vector <cl::Kernel> krnls(CU);
+
+  cout << "REACHED HERE 5" << endl;
+
   auto devices = xcl::get_xil_devices();
+  cout << "REACHED HERE 5.1" << endl;
   auto fileBuf = xcl::read_binary_file(binaryFile);
+  cout << "REACHED HERE 5.2" << endl;
   cl::Program::Binaries bins {
     {
       fileBuf.data(), fileBuf.size()
     }
   };
 
-  printf("REACHED HERE...\n");
+  cout << "REACHED HERE 6" << endl;
 
   bool valid_device = false;
   std::string krnl_name = "kernelBlackScholes";
@@ -148,6 +159,8 @@ int main(int argc, char ** argv) {
     std::cout << "Failed to program any device found, exit!\n";
     exit(EXIT_FAILURE);
   }
+
+  cout << "REACHED HERE 7" << endl;
 
   // ------------------------------------------------------------------------------------
   // Step 3: Initialize Buffers and add it to FPGA
@@ -244,7 +257,6 @@ int main(int argc, char ** argv) {
     }, CL_MIGRATE_MEM_OBJECT_HOST));
   }
   OCL_CHECK(err, err = q.finish());
-
   chrono::duration <double, std::milli> FPGA_time = (t2 - t1) / CU;
   printf("FPGA Time: %f ms\n", FPGA_time.count());
 
@@ -295,20 +307,14 @@ int main(int argc, char ** argv) {
   cout << "Mean Diff = " << mean_diff << endl;
   cout << "--------------------" << endl;
 
-  // *1_000_000 to convert to nanoseconds
-  double total_cpu_time = CPU_time.count() * 1000000;
-  double total_fpga_time = FPGA_time.count() * 1000000;
-  double average_cpu_time = total_cpu_time/RUNS;
-  double average_fpga_time = total_fpga_time/RUNS;
-  cout << "Total FPGA execution time " << total_fpga_time << " ns " << endl;
-  cout << "Total CPU execution time " << total_cpu_time << " ns" << endl;
-  cout << "Average FPGA execution time per batch " << average_fpga_time << " ns " << endl;
-  cout << "Average CPU execution time per batch" << average_cpu_time  << " ns" << endl;
-  cout << "Speedup " << total_cpu_time / total_fpga_time << endl;
-  cout << "FPGA batch SIZE options per ns: " << ((int)SIZE)/(average_fpga_time) << endl;
-  cout << "CPU batch SIZE options per ns: " << ((int)SIZE)/(average_cpu_time) << endl;
-  cout << "FPGA computation time (ns) per option: " << (average_fpga_time)/((int)SIZE)<< endl;
-  cout << "CPU computation time (ns) per option: " << (average_cpu_time)/((int)SIZE)<< endl;
+  printf("Total options calculations done: %d\n", DATA_SIZE*RUNS);
+  printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
+  printf("In seconds: %f \n", CPU_time.count()/1000);
+  // PRINT AVG TIME
+  printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(DATA_SIZE*RUNS)));
+  printf("Average FPGA Time per option: %f milli seconds\n", (FPGA_time.count()/(DATA_SIZE*RUNS*CU)));
+
+
 
   cout << "--------------------" << endl;
 
@@ -326,3 +332,4 @@ int main(int argc, char ** argv) {
 
   return (0);
 }
+

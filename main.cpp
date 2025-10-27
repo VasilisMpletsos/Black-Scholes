@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
     printf("In seconds: %f \n", CPU_time.count()/1000);
     // PRINT AVG TIME
-    printf("Average CPU Time per option: %f millis seconds\n", (CPU_time.count()/(DATA_SIZE*RUNS)));
+    printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(DATA_SIZE*RUNS)));
 
     // Print the dummy sum to ensure it's not optimized away
     // printf("Checksum (ignore): %f\n", dummy_sum);

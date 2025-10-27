@@ -126,18 +126,28 @@ For Server
 
 ```
 source /opt/xilinx/xrt/setup.sh
-
-<!-- source /tools/Xilinx/Vitis/2023.1/settings64.sh -->
-
 source /mnt/data2/Vivado2022.2.sh
-
-<!-- source /tools/Xilinx/Vitis/2019.2/settings64.sh -->
-
 export XCL_EMULATION_MODE=sw_emu
-
 ```
 
-And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx
+```
+In case of problem:
+
+unset XCL_EMULATION_MODE
+unset LD_LIBRARY_PATH
+unset LIBRARY_PATH
+unset PATH
+
+AND THEN RE IMPORT SOURCE
+Then
+
+xbutil reset
+xbutil examine
+```
+
+And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2020.2/data/xhub/boards/XilinxBoardStore/boards/Xilinx
+
+<!-- And one last command that maybe it is not needed if you place the alveo u200 to /tools/Xilinx/Vivado/2022.1/data/xhub/boards/XilinxBoardStore/boards/Xilinx -->
 
 ```
 

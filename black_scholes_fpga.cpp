@@ -18,7 +18,7 @@
 typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
-#define SIZE 85800
+#define SIZE 858
 #define N 12
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
@@ -225,11 +225,11 @@ extern "C" {
         static hls::stream<FPGA_FIXED_POINT> optionStream("write");
 
         // Add pragmas to the streams
-        #pragma HLS STREAM variable=optionTypeStream depth=32
-        #pragma HLS STREAM variable=spotpriceStream depth=32
-        #pragma HLS STREAM variable=strikepriceStream depth=32
-        #pragma HLS STREAM variable=timeStream depth=32
-        #pragma HLS STREAM variable=optionStream depth=32
+        #pragma HLS STREAM variable=optionTypeStream depth=16
+        #pragma HLS STREAM variable=spotpriceStream depth=16
+        #pragma HLS STREAM variable=strikepriceStream depth=16
+        #pragma HLS STREAM variable=timeStream depth=16
+        #pragma HLS STREAM variable=optionStream depth=16
 
         #pragma HLS DATAFLOW
         read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionType,spotprice,strikeprice,time);
