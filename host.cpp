@@ -1,4 +1,5 @@
 #define SIZE 858
+#define REPLICATION 64
 
 #include "utility.hpp"
 
@@ -64,6 +65,11 @@ int main(int argc, char ** argv) {
     float closePrices[SIZE], strikePrices[SIZE], tte[SIZE];
     int callTypes[SIZE];
 
+    const int BATCH_SIZE = SIZE * REPLICATION;
+
+    float passedClosePrices[BATCH_SIZE], passedStrikePrices[BATCH_SIZE], passedTte[BATCH_SIZE];
+    int passedCallTypes[BATCH_SIZE];
+
     printf("Reading data...\n");
     // Load data into host arrays
     for (int i = 0; i < SIZE; i++) {
@@ -80,6 +86,16 @@ int main(int argc, char ** argv) {
 
         std::getline(typeFile, line);
         callTypes[i] = std::stoi(line);  // Assuming type is an integer
+    }
+
+    for (int r = 0; r < REPLICATION; r++) {
+        for (int i = 0; i < SIZE; i++) {
+            int index = r * SIZE + i;
+            passedClosePrices[index] = closePrices[i];
+            passedStrikePrices[index] = strikePrices[i];
+            passedTte[index] = tte[i];
+            passedCallTypes[index] = callTypes[i];
+        }
     }
 
 
@@ -175,11 +191,11 @@ int main(int argc, char ** argv) {
   std::cout << "Setting buffers \n";
   // Create the buffers and allocate memory
   for (int i = 0; i < CU; i++) {
-    OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
-    OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
-    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
-    OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
-    OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, call_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, BATCH_SIZE * sizeof(OPTION_TYPE_BOOL), NULL, & err));
+    OCL_CHECK(err, close_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, BATCH_SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, strike_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, BATCH_SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, tte_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, BATCH_SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
+    OCL_CHECK(err, out_buf[i] = cl::Buffer(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, BATCH_SIZE * sizeof(FPGA_FIXED_POINT), NULL, & err));
   }
 
   std::cout << "Setting arguments for kernel \n";
@@ -206,20 +222,20 @@ int main(int argc, char ** argv) {
 
   std::cout << "Enquing data \n";
   for (int i = 0; i < CU; i++) {
-    calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(OPTION_TYPE_BOOL));
-    closeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
-    strikeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
-    timetoexpire[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, SIZE * sizeof(FPGA_FIXED_POINT));
-    result[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, SIZE * sizeof(FPGA_FIXED_POINT));
+    calloption[i] = (OPTION_TYPE_BOOL * ) q.enqueueMapBuffer(call_buf[i], CL_TRUE, CL_MAP_READ, 0, BATCH_SIZE * sizeof(OPTION_TYPE_BOOL));
+    closeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(close_buf[i], CL_TRUE, CL_MAP_READ, 0, BATCH_SIZE * sizeof(FPGA_FIXED_POINT));
+    strikeprice[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(strike_buf[i], CL_TRUE, CL_MAP_READ, 0, BATCH_SIZE * sizeof(FPGA_FIXED_POINT));
+    timetoexpire[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(tte_buf[i], CL_TRUE, CL_MAP_READ, 0, BATCH_SIZE * sizeof(FPGA_FIXED_POINT));
+    result[i] = (FPGA_FIXED_POINT * ) q.enqueueMapBuffer(out_buf[i], CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, BATCH_SIZE * sizeof(FPGA_FIXED_POINT));
   }
 
   // 3. Copy host data into mapped buffers.
   for (int cu = 0; cu < CU; cu++) {
-    for (int i = 0; i < SIZE; i++) {
-        calloption[cu][i] = callTypes[i];
-        closeprice[cu][i] = closePrices[i];
-        strikeprice[cu][i] = strikePrices[i];
-        timetoexpire[cu][i] = tte[i];
+    for (int i = 0; i < BATCH_SIZE; i++) {
+        calloption[cu][i] = passedCallTypes[i];
+        closeprice[cu][i] = passedClosePrices[i];
+        strikeprice[cu][i] = passedStrikePrices[i];
+        timetoexpire[cu][i] = passedTte[i];
     }
   }
 
@@ -262,11 +278,11 @@ int main(int argc, char ** argv) {
 
   // --------------- CPU Execution ---------------
 
-  float cpu_option_prices[SIZE];
+  float cpu_option_prices[BATCH_SIZE];
   t1 = chrono::high_resolution_clock::now();
   for (int j = 0; j < RUNS; j++){
-    for (int i = 0; i < SIZE; i++) {
-        Black_Scholes_CPU(callTypes[i] ,closePrices[i], strikePrices[i], RISK_FREE_RATE, VOLATILITY, tte[i], &cpu_option_prices[i]);
+    for (int i = 0; i < BATCH_SIZE; i++) {
+        Black_Scholes_CPU(passedCallTypes[i] ,passedClosePrices[i], passedStrikePrices[i], RISK_FREE_RATE, VOLATILITY, passedTte[i], &cpu_option_prices[i]);
     }
   }
   // for (int i = 0; i < SIZE; i++) {
@@ -282,14 +298,14 @@ int main(int argc, char ** argv) {
   int counter = 0;
   float sum = 0.0;
   printf("Calculating Diffs \n");
-  for (int i = 0; i < SIZE; i++) {
+  for (int i = 0; i < BATCH_SIZE; i++) {
     float fpga_value = (float) result[0][i];
     float dif = abs(cpu_option_prices[i] - fpga_value);
     if (dif > 2){
       cout << "----------------------------------------------------------------------------" << endl;
-      cout << "Call Type " << callTypes[i] << endl;
-      cout << "Strike Price " << strikePrices[i] << endl;
-      cout << "Time to expirty " << tte[i]  << endl;
+      cout << "Call Type " << passedCallTypes[i] << endl;
+      cout << "Strike Price " << passedStrikePrices[i] << endl;
+      cout << "Time to expirty " << passedTte[i]  << endl;
       cout << "CPU result " << i+1 << " = " << cpu_option_prices[i] << " | FPGA result= " << fpga_value << " | Diff= " << dif << endl;
     }
     sum += dif;
@@ -300,19 +316,19 @@ int main(int argc, char ** argv) {
   cout << endl;
   cout << "--- FINAL OPTIONS --- " << endl;
   cout << "Correct Predictions = " << counter << " | Size = " << SIZE << endl;
-  float score = (float) counter / SIZE;
-  float mean_diff = sum / SIZE;
+  float score = (float) counter / BATCH_SIZE;
+  float mean_diff = sum / BATCH_SIZE;
   cout << "Score = " << score * 100 << " % " << endl;
   cout << "Sum = " << sum << endl;
   cout << "Mean Diff = " << mean_diff << endl;
   cout << "--------------------" << endl;
 
-  printf("Total options calculations done: %d\n", SIZE*RUNS);
+  printf("Total options calculations done: %d\n", BATCH_SIZE*RUNS);
   printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
   printf("In seconds: %f \n", CPU_time.count()/1000);
   // PRINT AVG TIME
-  printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(SIZE*RUNS)));
-  printf("Average FPGA Time per option: %f micro seconds\n", (FPGA_time.count()/(SIZE*RUNS*CU)));
+  printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(BATCH_SIZE*RUNS)));
+  printf("Average FPGA Time per option: %f micro seconds\n", (FPGA_time.count()/(BATCH_SIZE*RUNS*CU)));
 
 
 

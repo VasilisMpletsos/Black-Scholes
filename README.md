@@ -136,7 +136,7 @@ For Server
 ```
 source /opt/xilinx/xrt/setup.sh
 source /mnt/data2/Vivado2022.2.sh
-export XCL_EMULATION_MODE=sw_emu
+export XCL_EMULATION_MODE=hw
 ```
 
 ```
