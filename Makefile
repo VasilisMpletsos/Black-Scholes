@@ -133,7 +133,10 @@ VPP_FLAGS += -t $(TARGET) --platform $(DEVICE) --connectivity.nk $(KERNEL_NAME):
 --connectivity.sp $(KERNEL_NAME)_4.strikeprice:DDR[3] \
 --connectivity.sp $(KERNEL_NAME)_4.time:DDR[3] \
 --connectivity.sp $(KERNEL_NAME)_4.optionPrice:DDR[3] \
---report_level estimate --profile.data all:all:all --profile.stall all:all --profile.exec all:all \
+--report_level estimate \
+--profile.data all:all:all \
+--profile.exec all:all \
+--data_transfer_trace=coarse \
 --kernel_frequency 300 --hls.clock 300000000:$(KERNEL_NAME) --save-temps
 
 # VPP_FLAGS += -t $(TARGET) --platform $(DEVICE)

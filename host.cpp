@@ -1,5 +1,5 @@
 #define SIZE 858
-#define REPLICATION 64
+#define REPLICATION 128
 
 #include "utility.hpp"
 
@@ -19,6 +19,7 @@ typedef ap_uint <1> OPTION_TYPE_BOOL;
 #define VOLATILITY 0.25
 
 // Import various libraries
+#include <cstdint>
 #include "string.h"
 #include <cmath>
 #include "stdio.h"
@@ -274,7 +275,7 @@ int main(int argc, char ** argv) {
   }
   OCL_CHECK(err, err = q.finish());
   chrono::duration <double, std::micro> FPGA_time = (t2 - t1) / CU;
-  printf("FPGA Time: %f ms\n", FPGA_time.count());
+  printf("FPGA Time: %f micro seconds\n", FPGA_time.count());
 
   // --------------- CPU Execution ---------------
 
@@ -327,8 +328,9 @@ int main(int argc, char ** argv) {
   printf("Total CPU Time: %f milli seconds\n", CPU_time.count());
   printf("In seconds: %f \n", CPU_time.count()/1000);
   // PRINT AVG TIME
+  uint64_t fpga_total_ops = (uint64_t)BATCH_SIZE * RUNS * CU;
   printf("Average CPU Time per option: %f milli seconds\n", (CPU_time.count()/(BATCH_SIZE*RUNS)));
-  printf("Average FPGA Time per option: %f micro seconds\n", (FPGA_time.count()/(BATCH_SIZE*RUNS*CU)));
+  printf("Average FPGA Time per option: %f micro seconds\n", (FPGA_time.count()/fpga_total_ops));
 
 
 

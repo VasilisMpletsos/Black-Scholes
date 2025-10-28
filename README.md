@@ -110,14 +110,13 @@ Gigaoptions per second: 0.511018
 
 ```
 
-GPU IS <u>**~ x80 times faster**</u> than the best implementation so far on CPU from C++
-and **x47833** from Python
+GPU IS <u>**~ 86666 times faster**</u> than the best implementation so far on CPU from C++
+and amazingly faster than Python
 
 ---
 
 ```
-FPGA IS <u>~**x209 times faster**</u> than the best implementation so far on CPU from C++
-and **x41513** from Python
+FPGA IS <u>~**2005 times faster**</u> than the best implementation so far on CPU from C++
 ```
 
 ### In order to run VITIS
@@ -163,6 +162,8 @@ And one last command that maybe it is not needed if you place the alveo u200 to 
 export PLATFORM_REPO_PATHS=/tools/Xilinx/Vivado/2022.1/data/boards/board_files
 
 ```
+
+In order to see **watts** use `xbutil examine --device 0000:04:00.1 --report electrical`
 
 Makefile
 
@@ -225,10 +226,3 @@ The estimated simulation from Vitis regarding execution time is:
 - [Black Scholes Cuda by Nvidia](https://github.com/tpn/cuda-samples/tree/master/v9.0/4_Finance/BlackScholes)
 - [Cuda Commands](https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DEVICE.html#group__CUDART__DEVICE)
 - [FPGA Platform Documentation](https://docs.amd.com/r/en-US/ug1120-alveo-platforms/U200-Gen3x16-XDMA-base_2-Platform)
-  ``
-
-```
-
-
-
-```

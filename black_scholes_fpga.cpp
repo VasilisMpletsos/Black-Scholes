@@ -16,10 +16,11 @@
 #include <algorithm>
 // typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
+typedef ap_fixed<32,16, AP_RND, AP_SAT> FP_INT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
-// 858 * 4
-#define SIZE 54912
+// 858 * 128
+#define SIZE 109824
 #define N 12
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
@@ -84,10 +85,10 @@ inline void calculate_prob_factors_d1_d2_fpga(
     
     /// Calculate log(S/K) with higher precision
     FPGA_FIXED_POINT ratio = spotprice/strike;
-    FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT)log((float)ratio);
+    FPGA_FIXED_POINT logVal = (FPGA_FIXED_POINT)hls::logf((float)ratio);
     
     // Calculate sqrt(tte) directly
-    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT)sqrt((float)tte);
+    FPGA_FIXED_POINT sqrtVal = (FPGA_FIXED_POINT)hls::sqrtf((float)tte);
     
     // Calculate volatility terms with higher precision
     FPGA_FIXED_POINT sigma_squared = (FPGA_FIXED_POINT)VOLATILITY * (FPGA_FIXED_POINT)VOLATILITY;
@@ -108,7 +109,7 @@ inline void calculate_prob_factors_d1_d2_fpga(
 inline FPGA_FIXED_POINT polynomial_approximation_fpga(FPGA_FIXED_POINT input) {
     #pragma HLS INLINE
     // Approximation of the CDF based on Abramowitz and Stegun
-    FPGA_FIXED_POINT abs_input = (FPGA_FIXED_POINT)std::fabs((float)input);
+    FPGA_FIXED_POINT abs_input = (FPGA_FIXED_POINT)hls::fabsf((float)input);
     FPGA_FIXED_POINT kappa = (FPGA_FIXED_POINT)1.0 / ((FPGA_FIXED_POINT)1.0 + (FPGA_FIXED_POINT)gamma * abs_input);
     FPGA_FIXED_POINT polynomial_approximation = kappa * ((FPGA_FIXED_POINT)alpha1 + kappa * ((FPGA_FIXED_POINT)alpha2 + kappa * ((FPGA_FIXED_POINT)alpha3 + kappa * ((FPGA_FIXED_POINT)alpha4 + (FPGA_FIXED_POINT)alpha5 * kappa))));
     return polynomial_approximation;
@@ -213,11 +214,11 @@ void write(hls::stream<FPGA_FIXED_POINT> &optionStream, FPGA_FIXED_POINT optionP
 extern "C" {
     void kernelBlackScholes(OPTION_TYPE_BOOL optionType[SIZE], FPGA_FIXED_POINT spotprice[SIZE], FPGA_FIXED_POINT strikeprice[SIZE],  FPGA_FIXED_POINT time[SIZE], FPGA_FIXED_POINT optionPrice[SIZE]){
 
-        #pragma HLS INTERFACE m_axi port=optionType bundle=gmem0
-        #pragma HLS INTERFACE m_axi port=spotprice bundle=gmem1
-        #pragma HLS INTERFACE m_axi port=strikeprice bundle=gmem2
-        #pragma HLS INTERFACE m_axi port=time bundle=gmem3
-        #pragma HLS INTERFACE m_axi port=optionPrice bundle=gmem4
+        #pragma HLS INTERFACE m_axi port=optionType  bundle=gmem0 num_read_outstanding=16  max_read_burst_length=256
+        #pragma HLS INTERFACE m_axi port=spotprice   bundle=gmem1 num_read_outstanding=16  max_read_burst_length=256
+        #pragma HLS INTERFACE m_axi port=strikeprice bundle=gmem2 num_read_outstanding=16  max_read_burst_length=256
+        #pragma HLS INTERFACE m_axi port=time        bundle=gmem3 num_read_outstanding=16  max_read_burst_length=256
+        #pragma HLS INTERFACE m_axi port=optionPrice bundle=gmem4 num_write_outstanding=16 max_write_burst_length=256
 
         static hls::stream<OPTION_TYPE_BOOL> optionTypeStream("read");
         static hls::stream<FPGA_FIXED_POINT> spotpriceStream("read");
@@ -226,11 +227,11 @@ extern "C" {
         static hls::stream<FPGA_FIXED_POINT> optionStream("write");
 
         // Add pragmas to the streams
-        #pragma HLS STREAM variable=optionTypeStream depth=32
-        #pragma HLS STREAM variable=spotpriceStream depth=32
-        #pragma HLS STREAM variable=strikepriceStream depth=32
-        #pragma HLS STREAM variable=timeStream depth=32
-        #pragma HLS STREAM variable=optionStream depth=32
+        #pragma HLS STREAM variable=optionTypeStream depth=64
+        #pragma HLS STREAM variable=spotpriceStream depth=64
+        #pragma HLS STREAM variable=strikepriceStream depth=64
+        #pragma HLS STREAM variable=timeStream depth=64
+        #pragma HLS STREAM variable=optionStream depth=64
 
         #pragma HLS DATAFLOW
         read(optionTypeStream,spotpriceStream,strikepriceStream,timeStream,optionType,spotprice,strikeprice,time);
