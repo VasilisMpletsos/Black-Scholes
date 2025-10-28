@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
+#include <hls_math.h>
 // typedef ap_fixed <64,32,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_fixed <23,13,AP_RND_CONV> FPGA_FIXED_POINT;
 typedef ap_fixed<32,16, AP_RND, AP_SAT> FP_INT;
