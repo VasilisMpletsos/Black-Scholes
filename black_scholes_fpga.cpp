@@ -21,7 +21,7 @@ typedef ap_fixed<32,16, AP_RND, AP_SAT> FP_INT;
 typedef ap_uint <1> OPTION_TYPE_BOOL;
 
 // 858 * 128
-#define SIZE 109824
+#define SIZE 858
 #define N 12
 #define SQRT_MAGIC_F 0x5f3759df
 #define RISK_FREE_RATE  0.01575
